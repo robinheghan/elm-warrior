@@ -1,25 +1,30 @@
 module Warrior.Map exposing
-    ( Config
-    , Map
-    , Tile(..)
-    , armLastNpc
-    , canMoveOnto
-    , canMoveOntoTile
-    , coordinateFrom
-    , init
-    , isExitPoint
-    , look
-    , npcs
-    , removeItem
-    , setNpcs
-    , spawnPoints
-    , view
-    , withExitPoint
-    , withItem
-    , withNPC
-    , withSpawnPoint
-    , withWalledArea
+    ( Map, Config, Tile(..)
+    , canMoveOnto, canMoveOntoTile, isExitPoint, look
+    , init, withExitPoint, withItem, withNPC, withSpawnPoint, withWalledArea, armLastNpc, setNpcs
+    , coordinateFrom, npcs, removeItem, spawnPoints, view
     )
+
+{-| The functions in this module allows you to create your own maps, or simply ask questions about the map currently being played.
+
+@docs Map, Config, Tile
+
+
+# Player API
+
+@docs canMoveOnto, canMoveOntoTile, isExitPoint, look
+
+
+# Creation API
+
+@docs init, withExitPoint, withItem, withNPC, withSpawnPoint, withWalledArea, armLastNpc, setNpcs
+
+
+# Internals
+
+@docs coordinateFrom, npcs, removeItem, spawnPoints, view
+
+-}
 
 import Array exposing (Array)
 import Element exposing (Element)
@@ -32,6 +37,8 @@ import Warrior.Item exposing (Item)
 import Warrior.Player as Player exposing (Player)
 
 
+{-| A map, or level.
+-}
 type Map
     = Map Internals
 
@@ -44,6 +51,8 @@ type alias Internals =
     }
 
 
+{-| Describes what is on a specific coordinate of a map.
+-}
 type Tile
     = Wall
     | Empty
@@ -53,12 +62,16 @@ type Tile
     | Exit
 
 
+{-| Describes how large a map should be in rows and columns. Use this when creating your own maps.
+-}
 type alias Config =
     { rows : Int
     , columns : Int
     }
 
 
+{-| Initialize an empty map of a given size where every tile is empty. Use the the following `with` functions to make the map more interesting.
+-}
 init : Config -> Map
 init config =
     Map
@@ -69,6 +82,8 @@ init config =
         }
 
 
+{-| Marks a coordinate on the map where the player will spawn.
+-}
 withSpawnPoint : Coordinate -> Map -> Map
 withSpawnPoint cord map =
     if coordinatesInBound cord map then
@@ -78,6 +93,8 @@ withSpawnPoint cord map =
         map
 
 
+{-| Marks a coordinate on the map where the player needs to go to advance to the next map.
+-}
 withExitPoint : Coordinate -> Map -> Map
 withExitPoint cord map =
     if coordinatesInBound cord map then
@@ -87,6 +104,8 @@ withExitPoint cord map =
         map
 
 
+{-| Turns every tile between two coordinates into walls.
+-}
 withWalledArea : Coordinate -> Coordinate -> Map -> Map
 withWalledArea cord1 cord2 ((Map fields) as map) =
     let
@@ -120,16 +139,22 @@ withWalledArea cord1 cord2 ((Map fields) as map) =
     Map { fields | tiles = updatedTiles }
 
 
+{-| Places a villain on the specific coordinate of the map, using the supplied function to know what to do each turn. You can find pre-made turn functions in the `Warrior.Npc` module.
+-}
 withNPC : Coordinate -> (Player -> Map -> Player.Action) -> Map -> Map
 withNPC cord turnFunc (Map fields) =
     Map { fields | npcs = ( Player.spawnVillain cord, turnFunc ) :: fields.npcs }
 
 
+{-| Replace all villains with the provided list. Might be less code than using multiple `withNPC` calls.
+-}
 setNpcs : List ( Player, Player -> Map -> Player.Action ) -> Map -> Map
 setNpcs newNpcs (Map fields) =
     Map { fields | npcs = newNpcs }
 
 
+{-| Places an item into the inventory of the last villain added with the `withNPC` function.
+-}
 armLastNpc : Item -> Map -> Map
 armLastNpc item (Map fields) =
     case fields.npcs of
@@ -140,6 +165,8 @@ armLastNpc item (Map fields) =
             Map { fields | npcs = ( Player.addItem item lastNpcState, lastNpcBrain ) :: rest }
 
 
+{-| Places an item on the map which can be picked up by players.
+-}
 withItem : Coordinate -> Item -> Map -> Map
 withItem coordinate item (Map fields) =
     let
@@ -149,6 +176,8 @@ withItem coordinate item (Map fields) =
     Map { fields | items = ( coordinate, item ) :: cleansedItems }
 
 
+{-| Removes an item from the map. This function can be ignored as it will be called by the framework.
+-}
 removeItem : Coordinate -> Map -> Maybe ( Item, Map )
 removeItem cord (Map fields) =
     let
@@ -202,6 +231,8 @@ updateTiles fn (Map fields) =
     Map { fields | tiles = fn fields.tiles }
 
 
+{-| A list of all points where players can spawn.
+-}
 spawnPoints : Map -> List Coordinate
 spawnPoints (Map fields) =
     Array.indexedMap Tuple.pair fields.tiles
@@ -210,11 +241,15 @@ spawnPoints (Map fields) =
         |> Array.toList
 
 
+{-| Framework function
+-}
 npcs : Map -> List ( Player, Player -> Map -> Player.Action )
 npcs (Map fields) =
     fields.npcs
 
 
+{-| Checks to see if a specific coordinate on the map is an exit point.
+-}
 isExitPoint : Map -> Coordinate -> Bool
 isExitPoint ((Map fields) as map) cord =
     Array.get (translateCoordinates cord map) fields.tiles
@@ -222,6 +257,8 @@ isExitPoint ((Map fields) as map) cord =
         |> Maybe.withDefault False
 
 
+{-| Framework function
+-}
 view : List Coordinate -> Map -> Element a
 view playerPositions ((Map fields) as map) =
     let
@@ -326,6 +363,8 @@ tileColor tile =
 -- Player API
 
 
+{-| Provides a list of everything the player can see in a specific direction. The first item of the list will be the one tile away from the player. The second item will be two tiles away, etc.
+-}
 look : Direction -> Coordinate -> Map -> List Tile
 look dir from map =
     lookHelp dir from map []
@@ -379,7 +418,7 @@ tileAtPosition cord fields =
             fields.npcs
                 |> List.map Tuple.first
                 |> List.filter Player.alive
-                |> List.map Player.currentPosition
+                |> List.map Player.position
 
         possibleItem =
             fields.items
@@ -399,6 +438,8 @@ tileAtPosition cord fields =
                 Empty
 
 
+{-| Ignore this function.
+-}
 coordinateFrom : Direction -> Coordinate -> Coordinate
 coordinateFrom dir start =
     case dir of
@@ -415,6 +456,8 @@ coordinateFrom dir start =
             { start | y = start.y + 1 }
 
 
+{-| Checks if a Move action can be performed.
+-}
 canMoveOnto : Coordinate -> Map -> Bool
 canMoveOnto cord ((Map fields) as map) =
     if not (coordinatesInBound cord map) then
@@ -437,11 +480,13 @@ canMoveOnto cord ((Map fields) as map) =
                         fields.npcs
                             |> List.map Tuple.first
                             |> List.filter Player.alive
-                            |> List.map Player.currentPosition
+                            |> List.map Player.position
                 in
                 not <| List.member cord playerCoordinates
 
 
+{-| Checks if a Move action can be formed onto the given tile.
+-}
 canMoveOntoTile : Tile -> Bool
 canMoveOntoTile tile =
     case tile of

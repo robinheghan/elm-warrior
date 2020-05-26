@@ -1,4 +1,24 @@
-module Warrior.Maps exposing (..)
+module Warrior.Maps exposing
+    ( all, movement, fighting
+    , straight, inverseL, loop, withDeadEndLeft, withDeadEndRight, openSpace, openSpaceReverse
+    , straightGuard, straightPowerfulGuard, straightGuardPickupSword
+    )
+
+{-| A selection of pre-made maps to test your hero.
+
+@docs all, movement, fighting
+
+
+# Movement only
+
+@docs straight, inverseL, loop, withDeadEndLeft, withDeadEndRight, openSpace, openSpaceReverse
+
+
+# Fighing only
+
+@docs straightGuard, straightPowerfulGuard, straightGuardPickupSword
+
+-}
 
 import Warrior.Item as Item
 import Warrior.Map as Map exposing (Map)
@@ -6,6 +26,8 @@ import Warrior.Npc.Dummy as Dummy
 import Warrior.Npc.StationaryAttacker as StationaryAttacker
 
 
+{-| A list of all pre-made maps.
+-}
 all : List Map
 all =
     List.concat
@@ -14,6 +36,8 @@ all =
         ]
 
 
+{-| A list of map that only require navigation.
+-}
 movement : List Map
 movement =
     [ straight
@@ -26,6 +50,8 @@ movement =
     ]
 
 
+{-| A list of maps which require fighting in addition to navigation.
+-}
 fighting : List Map
 fighting =
     [ straightGuard
@@ -38,6 +64,7 @@ fighting =
 -- MOVEMENT MAPS
 
 
+{-| -}
 straight : Map
 straight =
     Map.init { rows = 1, columns = 5 }
@@ -45,6 +72,7 @@ straight =
         |> Map.withExitPoint { x = 4, y = 0 }
 
 
+{-| -}
 inverseL : Map
 inverseL =
     Map.init { rows = 5, columns = 5 }
@@ -53,6 +81,7 @@ inverseL =
         |> Map.withExitPoint { x = 4, y = 4 }
 
 
+{-| -}
 loop : Map
 loop =
     Map.init { rows = 7, columns = 7 }
@@ -64,6 +93,7 @@ loop =
         |> Map.withWalledArea { x = 1, y = 5 } { x = 1, y = 3 }
 
 
+{-| -}
 withDeadEndLeft : Map
 withDeadEndLeft =
     Map.init { rows = 7, columns = 7 }
@@ -78,6 +108,7 @@ withDeadEndLeft =
         |> Map.withWalledArea { x = 0, y = 6 } { x = 0, y = 6 }
 
 
+{-| -}
 withDeadEndRight : Map
 withDeadEndRight =
     Map.init { rows = 7, columns = 7 }
@@ -92,6 +123,7 @@ withDeadEndRight =
         |> Map.withWalledArea { x = 0, y = 6 } { x = 0, y = 6 }
 
 
+{-| -}
 openSpace : Map
 openSpace =
     Map.init { rows = 7, columns = 7 }
@@ -99,6 +131,7 @@ openSpace =
         |> Map.withExitPoint { x = 5, y = 5 }
 
 
+{-| -}
 openSpaceReverse : Map
 openSpaceReverse =
     Map.init { rows = 7, columns = 7 }
@@ -110,6 +143,7 @@ openSpaceReverse =
 -- FIGHTING MAPS
 
 
+{-| -}
 straightGuard : Map
 straightGuard =
     Map.init { rows = 1, columns = 7 }
@@ -118,6 +152,7 @@ straightGuard =
         |> Map.withNPC { x = 3, y = 0 } Dummy.takeTurn
 
 
+{-| -}
 straightPowerfulGuard : Map
 straightPowerfulGuard =
     Map.init { rows = 1, columns = 7 }
@@ -127,6 +162,7 @@ straightPowerfulGuard =
         |> Map.armLastNpc Item.Sword
 
 
+{-| -}
 straightGuardPickupSword : Map
 straightGuardPickupSword =
     Map.init { rows = 1, columns = 7 }

@@ -1,10 +1,16 @@
 module Warrior exposing
-    ( Config
-    , Model
-    , Msg
+    ( Model, Msg
     , PlayerTurnFunction
-    , program
+    , Config, program
     )
+
+{-| Contains the essential logic for rendering and defining the game. The `Map` and `Player` modules will probably be more interesting.
+
+@docs Model, Msg
+@docs PlayerTurnFunction
+@docs Config, program
+
+-}
 
 import Browser
 import Element
@@ -14,6 +20,8 @@ import Warrior.Map as Map exposing (Map)
 import Warrior.Player as Player exposing (Player)
 
 
+{-| How would you like the game to be played? Which maps would you like to see the player try on, and how many milliseconds should we wait before showing the next turn?
+-}
 type alias Config =
     { maps : List Map
     , player : PlayerTurnFunction
@@ -21,6 +29,8 @@ type alias Config =
     }
 
 
+{-| Use this in your main function to start the game.
+-}
 program : Config -> Program () Model Msg
 program config =
     Browser.element
@@ -31,6 +41,8 @@ program config =
         }
 
 
+{-| The game model.
+-}
 type Model
     = Ongoing OngoingModel
     | Done
@@ -44,6 +56,8 @@ type alias OngoingModel =
     }
 
 
+{-| The type signature of an AI turn function
+-}
 type alias PlayerTurnFunction =
     Player -> Map -> Player.Action
 
@@ -79,6 +93,8 @@ modelWithMap players currentMap remainingMaps =
         }
 
 
+{-| The game message type.
+-}
 type Msg
     = Step
 
@@ -145,7 +161,7 @@ playerTurn ( player, turnFn ) model =
         Player.Move dir ->
             let
                 newCoordinate =
-                    Map.coordinateFrom dir (Player.currentPosition player)
+                    Map.coordinateFrom dir (Player.position player)
             in
             if Map.canMoveOnto newCoordinate updatedMap then
                 updatePlayer (Player.withPosition newCoordinate)
@@ -156,7 +172,7 @@ playerTurn ( player, turnFn ) model =
         Player.Pickup ->
             let
                 playerPos =
-                    Player.currentPosition player
+                    Player.position player
 
                 maybeRemovedItem =
                     Map.removeItem playerPos model.currentMap
@@ -178,12 +194,12 @@ playerTurn ( player, turnFn ) model =
         Player.Attack dir ->
             let
                 attackCoordinate =
-                    Map.coordinateFrom dir (Player.currentPosition player)
+                    Map.coordinateFrom dir (Player.position player)
 
                 possiblyAttackedPlayer =
                     List.map Tuple.first model.pcs
                         |> List.filter Player.alive
-                        |> List.filter (\pc -> Player.currentPosition pc == attackCoordinate)
+                        |> List.filter (\pc -> Player.position pc == attackCoordinate)
                         |> List.head
             in
             case possiblyAttackedPlayer of
@@ -216,7 +232,7 @@ doneWithCurrentMap : OngoingModel -> Bool
 doneWithCurrentMap state =
     List.any
         (Tuple.first
-            >> Player.currentPosition
+            >> Player.position
             >> Map.isExitPoint state.currentMap
         )
         state.pcs
@@ -235,7 +251,7 @@ view model =
                         state.pcs
                             |> List.map Tuple.first
                             |> List.filter Player.alive
-                            |> List.map Player.currentPosition
+                            |> List.map Player.position
                 in
                 Element.el
                     [ Element.centerX
