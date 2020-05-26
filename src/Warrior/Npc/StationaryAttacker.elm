@@ -12,7 +12,11 @@ takeTurn player map =
             Player.currentPosition player
 
         canAttack direction =
-            Map.look direction currentPosition map == Map.Player
+            Map.look direction currentPosition map
+                |> List.head
+                |> Maybe.map Tuple.second
+                |> Maybe.map ((==) Map.Player)
+                |> Maybe.withDefault False
     in
     Direction.all
         |> List.filter canAttack

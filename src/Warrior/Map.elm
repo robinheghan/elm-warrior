@@ -324,14 +324,21 @@ tileColor tile =
 -- Player API
 
 
-look : Direction -> Coordinate -> Map -> Tile
-look dir from ((Map fields) as map) =
+look : Direction -> Coordinate -> Map -> List ( Coordinate, Tile )
+look dir from map =
+    lookHelp dir from map []
+
+
+lookHelp : Direction -> Coordinate -> Map -> List ( Coordinate, Tile ) -> List ( Coordinate, Tile )
+lookHelp dir from ((Map fields) as map) result =
     let
         wantedCoordinate =
-            coordinateFrom dir from map
+            coordinateFrom dir from
     in
     if not (coordinatesInBound wantedCoordinate map) then
-        Wall
+        ( wantedCoordinate, Wall )
+            :: result
+            |> List.reverse
 
     else
         let
@@ -342,11 +349,25 @@ look dir from ((Map fields) as map) =
                     |> Maybe.withDefault Wall
         in
         case tile of
+            Wall ->
+                ( wantedCoordinate, Wall )
+                    :: result
+                    |> List.reverse
+
             Empty ->
-                tileAtPosition wantedCoordinate fields
+                let
+                    updatedResult =
+                        ( wantedCoordinate, tileAtPosition wantedCoordinate fields )
+                            :: result
+                in
+                lookHelp dir wantedCoordinate map updatedResult
 
             _ ->
-                tile
+                lookHelp
+                    dir
+                    wantedCoordinate
+                    map
+                    (( wantedCoordinate, tile ) :: result)
 
 
 tileAtPosition : Coordinate -> Internals -> Tile
@@ -376,8 +397,8 @@ tileAtPosition cord fields =
                 Empty
 
 
-coordinateFrom : Direction -> Coordinate -> Map -> Coordinate
-coordinateFrom dir start (Map fields) =
+coordinateFrom : Direction -> Coordinate -> Coordinate
+coordinateFrom dir start =
     case dir of
         Direction.Left ->
             { start | x = start.x - 1 }

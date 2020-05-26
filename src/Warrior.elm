@@ -145,7 +145,7 @@ playerTurn ( player, turnFn ) model =
         Player.Move dir ->
             let
                 newCoordinate =
-                    Map.coordinateFrom dir (Player.currentPosition player) updatedMap
+                    Map.coordinateFrom dir (Player.currentPosition player)
             in
             if Map.canMoveOnto newCoordinate updatedMap then
                 updatePlayer (Player.withPosition newCoordinate)
@@ -178,7 +178,7 @@ playerTurn ( player, turnFn ) model =
         Player.Attack dir ->
             let
                 attackCoordinate =
-                    Map.coordinateFrom dir (Player.currentPosition player) updatedMap
+                    Map.coordinateFrom dir (Player.currentPosition player)
 
                 possiblyAttackedPlayer =
                     List.map Tuple.first model.pcs
