@@ -4,7 +4,6 @@ import Warrior.Item as Item
 import Warrior.Map as Map exposing (Map)
 import Warrior.Npc.Dummy as Dummy
 import Warrior.Npc.StationaryAttacker as StationaryAttacker
-import Warrior.Player as Player
 
 
 all : List Map
@@ -36,7 +35,7 @@ fighting =
 
 
 
--- MOVEMENT TESTS
+-- MOVEMENT MAPS
 
 
 straight : Map
@@ -108,7 +107,7 @@ openSpaceReverse =
 
 
 
--- FIGHTING TESTS
+-- FIGHTING MAPS
 
 
 straightGuard : Map
