@@ -4,6 +4,7 @@ module Warrior.Map exposing
     , Tile(..)
     , armLastNpc
     , canMoveOnto
+    , canMoveOntoTile
     , coordinateFrom
     , init
     , isExitPoint
@@ -439,3 +440,22 @@ canMoveOnto cord ((Map fields) as map) =
                             |> List.map Player.currentPosition
                 in
                 not <| List.member cord playerCoordinates
+
+
+canMoveOntoTile : Tile -> Bool
+canMoveOntoTile tile =
+    case tile of
+        Empty ->
+            True
+
+        Item _ ->
+            True
+
+        Exit ->
+            True
+
+        SpawnPoint ->
+            True
+
+        _ ->
+            False
