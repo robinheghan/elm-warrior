@@ -36,7 +36,7 @@ type alias Internals =
     { playerRole : PlayerRole
     , spawnPosition : Coordinate
     , currentPosition : Coordinate
-    , previousActions : List Action
+    , previousActions : List ( Player, Action )
     , health : Int
     , maxHealth : Int
     , inventory : List Item
@@ -102,7 +102,7 @@ addItem item (Player fields) =
     Player { fields | inventory = item :: fields.inventory }
 
 
-previousActions : Player -> List Action
+previousActions : Player -> List ( Player, Action )
 previousActions (Player fields) =
     fields.previousActions
 
@@ -137,5 +137,5 @@ alive (Player fields) =
 
 
 addAction : Action -> Player -> Player
-addAction action (Player fields) =
-    Player <| { fields | previousActions = action :: fields.previousActions }
+addAction action ((Player fields) as player) =
+    Player <| { fields | previousActions = ( player, action ) :: fields.previousActions }
