@@ -8,6 +8,7 @@
         "Warrior",
         "Warrior.Coordinate",
         "Warrior.Direction",
+        "Warrior.Item",
         "Warrior.Map",
         "Warrior.Maps",
         "Warrior.Player",

@@ -27,6 +27,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction as Direction exposing (Direction)
+import Warrior.Item exposing (Item)
 import Warrior.Player as Player exposing (Player)
 
 
@@ -37,7 +38,7 @@ type Map
 type alias Internals =
     { tilesPerRow : Int
     , tiles : Array Tile
-    , items : List ( Coordinate, Player.Item )
+    , items : List ( Coordinate, Item )
     , npcs : List ( Player, Player -> Map -> Player.Action )
     }
 
@@ -47,7 +48,7 @@ type Tile
     | Empty
     | SpawnPoint
     | Player
-    | Item Player.Item
+    | Item Item
     | Exit
 
 
@@ -128,7 +129,7 @@ setNpcs newNpcs (Map fields) =
     Map { fields | npcs = newNpcs }
 
 
-armLastNpc : Player.Item -> Map -> Map
+armLastNpc : Item -> Map -> Map
 armLastNpc item (Map fields) =
     case fields.npcs of
         [] ->
@@ -138,7 +139,7 @@ armLastNpc item (Map fields) =
             Map { fields | npcs = ( Player.addItem item lastNpcState, lastNpcBrain ) :: rest }
 
 
-withItem : Coordinate -> Player.Item -> Map -> Map
+withItem : Coordinate -> Item -> Map -> Map
 withItem coordinate item (Map fields) =
     let
         cleansedItems =
@@ -147,7 +148,7 @@ withItem coordinate item (Map fields) =
     Map { fields | items = ( coordinate, item ) :: cleansedItems }
 
 
-removeItem : Coordinate -> Map -> Maybe ( Player.Item, Map )
+removeItem : Coordinate -> Map -> Maybe ( Item, Map )
 removeItem cord (Map fields) =
     let
         maybeItem =

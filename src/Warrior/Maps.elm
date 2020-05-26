@@ -1,5 +1,6 @@
 module Warrior.Maps exposing (..)
 
+import Warrior.Item as Item
 import Warrior.Map as Map exposing (Map)
 import Warrior.Npc.Dummy as Dummy
 import Warrior.Npc.StationaryAttacker as StationaryAttacker
@@ -124,7 +125,7 @@ straightPowerfulGuard =
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC { x = 3, y = 0 } StationaryAttacker.takeTurn
-        |> Map.armLastNpc Player.Sword
+        |> Map.armLastNpc Item.Sword
 
 
 straightGuardPickupSword : Map
@@ -133,4 +134,4 @@ straightGuardPickupSword =
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC { x = 4, y = 0 } StationaryAttacker.takeTurn
-        |> Map.withItem { x = 2, y = 0 } Player.Sword
+        |> Map.withItem { x = 2, y = 0 } Item.Sword

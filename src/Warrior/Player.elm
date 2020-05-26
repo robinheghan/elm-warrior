@@ -1,6 +1,5 @@
 module Warrior.Player exposing
     ( Action(..)
-    , Item(..)
     , Player
     , PlayerRole(..)
     , addAction
@@ -21,6 +20,7 @@ module Warrior.Player exposing
 
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction exposing (Direction)
+import Warrior.Item as Item exposing (Item)
 
 
 type Player
@@ -49,10 +49,6 @@ type Action
     | Pickup
     | Heal
     | Attack Direction
-
-
-type Item
-    = Sword
 
 
 spawnHero : Coordinate -> Player
@@ -128,7 +124,7 @@ attack attacker (Player defender) =
 
 attackDamage : Player -> Int
 attackDamage (Player fields) =
-    if List.member Sword fields.inventory then
+    if List.member Item.Sword fields.inventory then
         4
 
     else
