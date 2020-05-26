@@ -325,19 +325,19 @@ tileColor tile =
 -- Player API
 
 
-look : Direction -> Coordinate -> Map -> List ( Coordinate, Tile )
+look : Direction -> Coordinate -> Map -> List Tile
 look dir from map =
     lookHelp dir from map []
 
 
-lookHelp : Direction -> Coordinate -> Map -> List ( Coordinate, Tile ) -> List ( Coordinate, Tile )
+lookHelp : Direction -> Coordinate -> Map -> List Tile -> List Tile
 lookHelp dir from ((Map fields) as map) result =
     let
         wantedCoordinate =
             coordinateFrom dir from
     in
     if not (coordinatesInBound wantedCoordinate map) then
-        ( wantedCoordinate, Wall )
+        Wall
             :: result
             |> List.reverse
 
@@ -351,14 +351,14 @@ lookHelp dir from ((Map fields) as map) result =
         in
         case tile of
             Wall ->
-                ( wantedCoordinate, Wall )
+                Wall
                     :: result
                     |> List.reverse
 
             Empty ->
                 let
                     updatedResult =
-                        ( wantedCoordinate, tileAtPosition wantedCoordinate fields )
+                        tileAtPosition wantedCoordinate fields
                             :: result
                 in
                 lookHelp dir wantedCoordinate map updatedResult
@@ -368,7 +368,7 @@ lookHelp dir from ((Map fields) as map) result =
                     dir
                     wantedCoordinate
                     map
-                    (( wantedCoordinate, tile ) :: result)
+                    (tile :: result)
 
 
 tileAtPosition : Coordinate -> Internals -> Tile
