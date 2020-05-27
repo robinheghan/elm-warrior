@@ -13,9 +13,12 @@ module Warrior exposing
 -}
 
 import Browser
-import Element
+import Element exposing (Element)
+import Element.Font as Font
 import Html exposing (Html)
 import Time
+import Warrior.Direction as Direction
+import Warrior.Item as Item
 import Warrior.Map as Map exposing (Map)
 import Warrior.Player as Player exposing (Player)
 
@@ -53,6 +56,7 @@ type alias OngoingModel =
     , pcs : List ( Player, PlayerTurnFunction )
     , currentMap : Map
     , remainingMaps : List Map
+    , actionLog : List String
     }
 
 
@@ -90,6 +94,7 @@ modelWithMap players currentMap remainingMaps =
         , pcs = pcs
         , currentMap = currentMap
         , remainingMaps = remainingMaps
+        , actionLog = []
         }
 
 
@@ -136,7 +141,7 @@ playerTurn ( player, turnFn ) model =
         playerAction =
             turnFn player updatedMap
 
-        updatePlayer fn =
+        updatePlayer fn event =
             { model
                 | pcs =
                     List.map
@@ -152,11 +157,12 @@ playerTurn ( player, turnFn ) model =
                                 ( pc, turnFunc )
                         )
                         model.pcs
+                , actionLog = event :: model.actionLog
             }
     in
     case playerAction of
         Player.Wait ->
-            updatePlayer identity
+            updatePlayer identity "Player waits"
 
         Player.Move dir ->
             let
@@ -164,10 +170,16 @@ playerTurn ( player, turnFn ) model =
                     Map.coordinateFrom dir (Player.position player)
             in
             if Map.canMoveOnto newCoordinate updatedMap then
-                updatePlayer (Player.withPosition newCoordinate)
+                updatePlayer (Player.withPosition newCoordinate) <|
+                    String.join " "
+                        [ "Player moves"
+                        , dir
+                            |> Direction.toString
+                            |> String.toLower
+                        ]
 
             else
-                model
+                updatePlayer identity "Player tries to move to an impossible position!"
 
         Player.Pickup ->
             let
@@ -181,15 +193,23 @@ playerTurn ( player, turnFn ) model =
                 Just ( removedItem, mapWithItemRemoved ) ->
                     let
                         modelWithUpdatedPlayer =
-                            updatePlayer (Player.addItem removedItem)
+                            updatePlayer (Player.addItem removedItem) <|
+                                String.join " "
+                                    [ "Player picked up"
+                                    , removedItem
+                                        |> Item.toString
+                                        |> String.toLower
+                                    ]
                     in
                     { modelWithUpdatedPlayer | currentMap = mapWithItemRemoved }
 
                 Nothing ->
-                    updatePlayer identity
+                    updatePlayer identity <|
+                        "Player tried to pick up an item, but there is no item to pick up."
 
         Player.Heal ->
-            updatePlayer Player.heal
+            updatePlayer Player.heal <|
+                "Player takes a rest, improving their strength."
 
         Player.Attack dir ->
             let
@@ -225,6 +245,19 @@ playerTurn ( player, turnFn ) model =
                                         ( pc, turnFunc )
                                 )
                                 model.pcs
+                        , actionLog =
+                            String.join " "
+                                [ "Player attacks"
+                                , dir
+                                    |> Direction.toString
+                                    |> String.toLower
+                                    |> String.append "."
+                                , "Dealing"
+                                , Player.attackDamage player
+                                    |> String.fromInt
+                                , "damage."
+                                ]
+                                :: model.actionLog
                     }
 
 
@@ -253,11 +286,28 @@ view model =
                             |> List.filter Player.alive
                             |> List.map Player.position
                 in
-                Element.el
+                Element.column
                     [ Element.centerX
                     , Element.centerY
                     ]
-                    (Map.view playerPositions state.currentMap)
+                    [ Element.el
+                        [ Element.centerX
+                        , Element.paddingEach
+                            { top = 0
+                            , left = 0
+                            , right = 0
+                            , bottom = 50
+                            }
+                        ]
+                        (Map.view playerPositions state.currentMap)
+                    , Element.column
+                        [ Element.width Element.fill
+                        , Element.height <| Element.px 100
+                        , Element.clip
+                        , Element.scrollbarY
+                        ]
+                        (List.map viewActionLog state.actionLog)
+                    ]
 
             Done ->
                 Element.el
@@ -266,6 +316,13 @@ view model =
                     ]
                     (Element.text "Congratulations!")
         )
+
+
+viewActionLog : String -> Element msg
+viewActionLog event =
+    Element.paragraph
+        [ Font.center ]
+        [ Element.text event ]
 
 
 subscriptions : Float -> Model -> Sub Msg

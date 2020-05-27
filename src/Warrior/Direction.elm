@@ -1,12 +1,12 @@
 module Warrior.Direction exposing
     ( Direction(..)
-    , all
+    , all, toString
     )
 
 {-| Directions are usually used to specify where an action is applied.
 
 @docs Direction
-@docs all
+@docs all, toString
 
 -}
 
@@ -29,3 +29,21 @@ all =
     , Up
     , Down
     ]
+
+
+{-| Turns direction value into a human readable string
+-}
+toString : Direction -> String
+toString dir =
+    case dir of
+        Left ->
+            "Left"
+
+        Right ->
+            "Right"
+
+        Up ->
+            "Up"
+
+        Down ->
+            "Down"
