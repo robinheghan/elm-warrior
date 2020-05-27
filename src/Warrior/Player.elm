@@ -167,5 +167,10 @@ alive (Player fields) =
 {-| Adds an action to the list of previous actions. Is called by the framework and can be safely ignored.
 -}
 addAction : Action -> Player -> Player
-addAction action ((Player fields) as player) =
-    Player <| { fields | previousActions = ( player, action ) :: fields.previousActions }
+addAction action (Player fields) =
+    let
+        -- We need to do this, as the recursive history really destroys performance
+        playerWithoutHistory =
+            Player { fields | previousActions = [] }
+    in
+    Player <| { fields | previousActions = ( playerWithoutHistory, action ) :: fields.previousActions }
