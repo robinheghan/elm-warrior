@@ -1,7 +1,7 @@
 module Warrior.Map exposing
     ( Map, Config, Tile(..)
     , canMoveOnto, canMoveOntoTile, isExitPoint, look
-    , init, withExitPoint, withItem, withNPC, withSpawnPoint, withWalledArea, armLastNpc, setNpcs
+    , init, withExitPoint, withItem, withNPC, withSpawnPoint, withWalledArea, armLastNpc, setNpcs, withDescription
     , coordinateFrom, npcs, removeItem, spawnPoints, view
     )
 
@@ -17,7 +17,7 @@ module Warrior.Map exposing
 
 # Creation API
 
-@docs init, withExitPoint, withItem, withNPC, withSpawnPoint, withWalledArea, armLastNpc, setNpcs
+@docs init, withExitPoint, withItem, withNPC, withSpawnPoint, withWalledArea, armLastNpc, setNpcs, withDescription
 
 
 # Internals
@@ -48,6 +48,7 @@ type alias Internals =
     , tiles : Array Tile
     , items : List ( Coordinate, Item )
     , npcs : List ( Player, Player -> Map -> Player.Action )
+    , description : String
     }
 
 
@@ -79,6 +80,7 @@ init config =
         , tiles = Array.initialize (config.columns * config.rows) (always Empty)
         , items = []
         , npcs = []
+        , description = ""
         }
 
 
@@ -151,6 +153,13 @@ withNPC cord turnFunc (Map fields) =
 setNpcs : List ( Player, Player -> Map -> Player.Action ) -> Map -> Map
 setNpcs newNpcs (Map fields) =
     Map { fields | npcs = newNpcs }
+
+
+{-| Sets a description for the map which, by default, will be displayed above the map when the game is played.
+-}
+withDescription : String -> Map -> Map
+withDescription description (Map fields) =
+    Map { fields | description = description }
 
 
 {-| Places an item into the inventory of the last villain added with the `withNPC` function.
@@ -270,13 +279,31 @@ view playerPositions ((Map fields) as map) =
                 |> Array.map (viewTile [] 0)
                 |> Array.toList
                 |> Element.row []
+
+        withDesc mapElement =
+            Element.column
+                []
+                [ Element.paragraph
+                    [ Element.paddingEach
+                        { top = 0
+                        , left = 0
+                        , right = 0
+                        , bottom = 50
+                        }
+                    , Element.width <| Element.maximum 500 Element.fill
+                    , Element.centerX
+                    ]
+                    [ Element.text fields.description ]
+                , mapElement
+                ]
     in
     fields.tiles
         |> Array.indexedMap (mapTile fields)
         |> Array.indexedMap (viewTile playerIndices)
         |> asRows fields.tilesPerRow []
         |> surroundElements firstAndLast
-        |> Element.column []
+        |> Element.column [ Element.centerX ]
+        |> withDesc
 
 
 mapTile : Internals -> Int -> Tile -> Tile

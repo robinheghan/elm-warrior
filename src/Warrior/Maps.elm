@@ -68,6 +68,7 @@ fighting =
 straight : Map
 straight =
     Map.init { rows = 1, columns = 5 }
+        |> Map.withDescription "The goal for these first couple of maps is simply to reach that green area, also known as the exit point. Let's see if we can reach it."
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 4, y = 0 }
 
@@ -147,6 +148,7 @@ openSpaceReverse =
 straightGuard : Map
 straightGuard =
     Map.init { rows = 1, columns = 7 }
+        |> Map.withDescription "Hmm... Another character. Too bad she's in our way, she'll have to go. Attack!"
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC { x = 3, y = 0 } Dummy.takeTurn
@@ -156,6 +158,7 @@ straightGuard =
 straightPowerfulGuard : Map
 straightPowerfulGuard =
     Map.init { rows = 1, columns = 7 }
+        |> Map.withDescription "Be careful, this one might hit back. Be ready to heal if your health becomes low."
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC { x = 3, y = 0 } StationaryAttacker.takeTurn
@@ -166,6 +169,7 @@ straightPowerfulGuard =
 straightGuardPickupSword : Map
 straightGuardPickupSword =
     Map.init { rows = 1, columns = 7 }
+        |> Map.withDescription "See that yellow tile? It's an item. Let's pick it up, it might improve our attacks."
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC { x = 4, y = 0 } StationaryAttacker.takeTurn
