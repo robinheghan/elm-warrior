@@ -148,7 +148,7 @@ openSpaceReverse =
 straightGuard : Map
 straightGuard =
     Map.init { rows = 1, columns = 7 }
-        |> Map.withDescription "Hmm... Another character. Too bad she's in our way, she'll have to go. Attack!"
+        |> Map.withDescription "Hmm... Another character. Too bad she's in our way. Attack!"
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC { x = 3, y = 0 } Dummy.takeTurn

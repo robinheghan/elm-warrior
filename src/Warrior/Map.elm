@@ -27,10 +27,13 @@ module Warrior.Map exposing
 -}
 
 import Array exposing (Array)
+import Color exposing (Color)
+import Dict exposing (Dict)
 import Element exposing (Element)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
+import Palette.Cubehelix as Palette
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction as Direction exposing (Direction)
 import Warrior.Item exposing (Item)
@@ -274,9 +277,28 @@ view playerPositions ((Map fields) as map) =
         playerIndices =
             List.map (\cord -> translateCoordinates cord map) playerPositions
 
+        playerColors =
+            Palette.generate (List.length playerIndices + 2)
+                |> List.filter notBlackOrWhite
+                |> List.map2 Tuple.pair playerIndices
+                |> Dict.fromList
+
+        notBlackOrWhite clr =
+            let
+                black =
+                    ( 0, 0, 0 )
+
+                white =
+                    ( 255, 255, 255 )
+
+                colorValues =
+                    Color.toRGB clr
+            in
+            not (colorValues == black || colorValues == white)
+
         firstAndLast =
             Array.initialize (fields.tilesPerRow + 2) (always Wall)
-                |> Array.map (viewTile [] 0)
+                |> Array.map (viewTile Dict.empty 0)
                 |> Array.toList
                 |> Element.row []
 
@@ -299,7 +321,7 @@ view playerPositions ((Map fields) as map) =
     in
     fields.tiles
         |> Array.indexedMap (mapTile fields)
-        |> Array.indexedMap (viewTile playerIndices)
+        |> Array.indexedMap (viewTile playerColors)
         |> asRows fields.tilesPerRow []
         |> surroundElements firstAndLast
         |> Element.column [ Element.centerX ]
@@ -319,24 +341,29 @@ mapTile fields index originalTile =
         tileAtPosition coordinate fields
 
 
-viewTile : List Int -> Int -> Tile -> Element a
-viewTile playerPositionIndices index tile =
+viewTile : Dict Int Color -> Int -> Tile -> Element a
+viewTile playerColors index tile =
     Element.el
         [ Element.width <| Element.px 50
         , Element.height <| Element.px 50
         , Background.color <| tileColor tile
         , Border.width 1
         ]
-        (if List.any ((==) index) playerPositionIndices then
-            Element.el
-                [ Element.centerX
-                , Element.centerY
-                , Font.color <| Element.rgb255 122 122 122
-                ]
-                (Element.text "@")
+        (case Dict.get index playerColors of
+            Just playerColor ->
+                let
+                    ( r, g, b ) =
+                        Color.toRGB playerColor
+                in
+                Element.el
+                    [ Element.centerX
+                    , Element.centerY
+                    , Font.color <| Element.rgb255 (floor r) (floor g) (floor b)
+                    ]
+                    (Element.text "@")
 
-         else
-            Element.none
+            Nothing ->
+                Element.none
         )
 
 
@@ -350,7 +377,7 @@ asRows tilesPerRow rows remainingTiles =
             nextTiles =
                 Array.slice 0 tilesPerRow remainingTiles
                     |> Array.toList
-                    |> surroundElements (viewTile [] 0 Wall)
+                    |> surroundElements (viewTile Dict.empty 0 Wall)
                     |> Element.row []
 
             tilesAfterSlice =
@@ -380,10 +407,10 @@ tileColor tile =
             Element.rgba255 255 255 0 0.4
 
         SpawnPoint ->
-            Element.rgb255 0 0 255
+            Element.rgba255 0 0 255 0.4
 
         Exit ->
-            Element.rgb255 0 255 0
+            Element.rgba255 0 255 0 0.4
 
 
 
