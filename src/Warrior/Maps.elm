@@ -1,7 +1,7 @@
 module Warrior.Maps exposing
     ( all, movement, fighting
     , straight, inverseL, loop, withDeadEndLeft, withDeadEndRight, openSpace, openSpaceReverse
-    , straightGuard, straightPowerfulGuard, straightGuardPickupSword
+    , straightGuard, straightPowerfulGuard, straightGuardPickupSword, straightGuardPickupPotion, dungeon
     )
 
 {-| A selection of pre-made maps to test your hero.
@@ -16,7 +16,7 @@ module Warrior.Maps exposing
 
 # Fighing only
 
-@docs straightGuard, straightPowerfulGuard, straightGuardPickupSword
+@docs straightGuard, straightPowerfulGuard, straightGuardPickupSword, straightGuardPickupPotion, dungeon
 
 -}
 
@@ -58,6 +58,7 @@ fighting =
     , straightPowerfulGuard
     , straightGuardPickupSword
     , straightGuardPickupPotion
+    , dungeon
     ]
 
 
@@ -187,3 +188,22 @@ straightGuardPickupPotion =
         |> Map.withNPC { x = 4, y = 0 } StationaryAttacker.takeTurn
         |> Map.armLastNpc Item.Sword
         |> Map.withItem { x = 2, y = 0 } Item.Potion
+
+
+{-| -}
+dungeon : Map
+dungeon =
+    Map.init { rows = 7, columns = 7 }
+        |> Map.withDescription "This is the true test. Make it out alive."
+        |> Map.withSpawnPoint { x = 0, y = 6 }
+        |> Map.withExitPoint { x = 3, y = 0 }
+        |> Map.withWalledArea { x = 0, y = 0 } { x = 2, y = 1 }
+        |> Map.withWalledArea { x = 4, y = 0 } { x = 6, y = 1 }
+        |> Map.withWalledArea { x = 0, y = 5 } { x = 5, y = 5 }
+        |> Map.withWalledArea { x = 6, y = 3 } { x = 1, y = 3 }
+        |> Map.withNPC { x = 6, y = 5 } StationaryAttacker.takeTurn
+        |> Map.withNPC { x = 0, y = 3 } StationaryAttacker.takeTurn
+        |> Map.withNPC { x = 3, y = 1 } StationaryAttacker.takeTurn
+        |> Map.armLastNpc Item.Sword
+        |> Map.withItem { x = 6, y = 4 } Item.Sword
+        |> Map.withItem { x = 0, y = 2 } Item.Potion
