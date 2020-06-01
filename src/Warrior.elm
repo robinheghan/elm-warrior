@@ -52,8 +52,8 @@ type Model
 
 
 type alias OngoingModel =
-    { initialPlayers : List PlayerTurnFunction
-    , pcs : List ( Player, PlayerTurnFunction )
+    { initialPlayers : List ( String, PlayerTurnFunction )
+    , pcs : List PlayerDescription
     , currentMap : Map
     , remainingMaps : List Map
     , actionLog : List String
@@ -66,6 +66,13 @@ type alias PlayerTurnFunction =
     Player -> Map -> Player.Action
 
 
+type alias PlayerDescription =
+    { id : String
+    , state : Player
+    , turnFunction : PlayerTurnFunction
+    }
+
+
 init : Config -> ( Model, Cmd msg )
 init config =
     case config.maps of
@@ -75,23 +82,35 @@ init config =
             )
 
         first :: rest ->
-            ( modelWithMap [ config.player ] first rest
+            ( modelWithMap [ ( "Player", config.player ) ] first rest
             , Cmd.none
             )
 
 
-modelWithMap : List PlayerTurnFunction -> Map -> List Map -> Model
+modelWithMap : List ( String, PlayerTurnFunction ) -> Map -> List Map -> Model
 modelWithMap players currentMap remainingMaps =
     let
         pcs =
             Map.spawnPoints currentMap
                 |> List.map Player.spawnHero
-                |> (\spawnedPlayers -> List.map2 Tuple.pair spawnedPlayers players)
-                |> List.append (Map.npcs currentMap)
+                |> List.map2 toPlayerDescription players
+
+        npcs =
+            Map.npcs currentMap
+                |> List.indexedMap
+                    (\idx ( state, turnFunc ) ->
+                        toPlayerDescription ( "NPC " ++ String.fromInt idx, turnFunc ) state
+                    )
+
+        toPlayerDescription ( id, turnFunc ) state =
+            { id = id
+            , state = state
+            , turnFunction = turnFunc
+            }
     in
     Ongoing
         { initialPlayers = players
-        , pcs = pcs
+        , pcs = List.append pcs npcs
         , currentMap = currentMap
         , remainingMaps = remainingMaps
         , actionLog = []
@@ -125,66 +144,67 @@ update _ model =
 
             else
                 ( state.pcs
-                    |> List.filter (\( pc, _ ) -> Player.alive pc)
+                    |> List.filter (.state >> Player.alive)
                     |> List.foldl playerTurn state
                     |> Ongoing
                 , Cmd.none
                 )
 
 
-playerTurn : ( Player, PlayerTurnFunction ) -> OngoingModel -> OngoingModel
-playerTurn ( player, turnFn ) model =
+playerTurn : PlayerDescription -> OngoingModel -> OngoingModel
+playerTurn playerDescription model =
     let
         updatedMap =
-            Map.setNpcs model.pcs model.currentMap
+            Map.setNpcs (List.map (\desc -> ( desc.state, desc.turnFunction )) model.pcs) model.currentMap
 
         playerAction =
-            turnFn player updatedMap
+            playerDescription.turnFunction playerDescription.state updatedMap
 
         updatePlayer fn event =
             { model
                 | pcs =
                     List.map
-                        (\( pc, turnFunc ) ->
-                            if pc == player then
-                                ( pc
-                                    |> Player.addAction playerAction
-                                    |> fn
-                                , turnFunc
-                                )
+                        (\desc ->
+                            if desc == playerDescription then
+                                { desc
+                                    | state =
+                                        desc.state
+                                            |> Player.addAction playerAction
+                                            |> fn
+                                }
 
                             else
-                                ( pc, turnFunc )
+                                desc
                         )
                         model.pcs
-                , actionLog = event :: model.actionLog
+                , actionLog = String.join " " [ playerDescription.id, event ] :: model.actionLog
             }
     in
     case playerAction of
         Player.Wait ->
-            updatePlayer identity "Player waits"
+            updatePlayer identity "waits"
 
         Player.Move dir ->
             let
                 newCoordinate =
-                    Map.coordinateFrom dir (Player.position player)
+                    Map.coordinateFrom dir (Player.position playerDescription.state)
             in
             if Map.canMoveOnto newCoordinate updatedMap then
                 updatePlayer (Player.withPosition newCoordinate) <|
                     String.join " "
-                        [ "Player moves"
+                        [ "moves"
                         , dir
                             |> Direction.toString
                             |> String.toLower
                         ]
 
             else
-                updatePlayer identity "Player tries to move to an impossible position!"
+                updatePlayer identity "tries to move to an impossible position!"
 
         Player.Pickup ->
             let
                 playerPos =
-                    Player.position player
+                    Player.position playerDescription.state
 
                 maybeRemovedItem =
                     Map.removeItem playerPos model.currentMap
@@ -195,7 +215,7 @@ playerTurn ( player, turnFn ) model =
                         modelWithUpdatedPlayer =
                             updatePlayer (Player.addItem removedItem) <|
                                 String.join " "
-                                    [ "Player picked up"
+                                    [ "picked up"
                                     , removedItem
                                         |> Item.toString
                                         |> String.toLower
@@ -205,55 +225,52 @@ playerTurn ( player, turnFn ) model =
 
                 Nothing ->
                     updatePlayer identity <|
-                        "Player tried to pick up an item, but there is no item to pick up."
+                        "tried to pick up an item, but there is no item to pick up."
 
         Player.Heal ->
             updatePlayer Player.heal <|
-                "Player takes a rest, improving their strength."
+                "takes a rest, improving their strength."
 
         Player.Attack dir ->
             let
                 attackCoordinate =
-                    Map.coordinateFrom dir (Player.position player)
+                    Map.coordinateFrom dir (Player.position playerDescription.state)
 
                 possiblyAttackedPlayer =
-                    List.map Tuple.first model.pcs
+                    List.map .state model.pcs
                         |> List.filter Player.alive
                         |> List.filter (\pc -> Player.position pc == attackCoordinate)
                         |> List.head
             in
             case possiblyAttackedPlayer of
                 Nothing ->
-                    model
+                    updatePlayer identity <|
+                        "tried attacking, but no one was there."
 
                 Just attackedPlayer ->
                     { model
                         | pcs =
                             List.map
-                                (\( pc, turnFunc ) ->
-                                    if pc == player then
-                                        ( Player.addAction playerAction pc
-                                        , turnFunc
-                                        )
+                                (\desc ->
+                                    if desc.state == playerDescription.state then
+                                        { desc | state = Player.addAction playerAction desc.state }
 
-                                    else if pc == attackedPlayer then
-                                        ( Player.attack player pc
-                                        , turnFunc
-                                        )
+                                    else if desc.state == attackedPlayer then
+                                        { desc | state = Player.attack playerDescription.state desc.state }
 
                                     else
-                                        ( pc, turnFunc )
+                                        desc
                                 )
                                 model.pcs
                         , actionLog =
                             String.join " "
-                                [ "Player attacks"
+                                [ "attacks"
                                 , dir
                                     |> Direction.toString
                                     |> String.toLower
                                     |> String.append "."
                                 , "Dealing"
-                                , Player.attackDamage player
+                                , Player.attackDamage playerDescription.state
                                     |> String.fromInt
                                 , "damage."
                                 ]
@@ -264,10 +281,7 @@ playerTurn ( player, turnFn ) model =
 doneWithCurrentMap : OngoingModel -> Bool
 doneWithCurrentMap state =
     List.any
-        (Tuple.first
-            >> Player.position
-            >> Map.isExitPoint state.currentMap
-        )
+        (.state >> Player.position >> Map.isExitPoint state.currentMap)
         state.pcs
 
 
@@ -282,7 +296,7 @@ view model =
                 let
                     playerPositions =
                         state.pcs
-                            |> List.map Tuple.first
+                            |> List.map .state
                             |> List.filter Player.alive
                             |> List.map Player.position
                 in
