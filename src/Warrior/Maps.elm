@@ -57,6 +57,7 @@ fighting =
     [ straightGuard
     , straightPowerfulGuard
     , straightGuardPickupSword
+    , straightGuardPickupPotion
     ]
 
 
@@ -174,3 +175,15 @@ straightGuardPickupSword =
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC { x = 4, y = 0 } StationaryAttacker.takeTurn
         |> Map.withItem { x = 2, y = 0 } Item.Sword
+
+
+{-| -}
+straightGuardPickupPotion : Map
+straightGuardPickupPotion =
+    Map.init { rows = 1, columns = 7 }
+        |> Map.withDescription "Another item? Looks potion'y like. Wonder what it will do..."
+        |> Map.withSpawnPoint { x = 0, y = 0 }
+        |> Map.withExitPoint { x = 6, y = 0 }
+        |> Map.withNPC { x = 4, y = 0 } StationaryAttacker.takeTurn
+        |> Map.armLastNpc Item.Sword
+        |> Map.withItem { x = 2, y = 0 } Item.Potion

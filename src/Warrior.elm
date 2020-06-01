@@ -229,7 +229,11 @@ playerTurn playerDescription model =
 
         Player.Heal ->
             updatePlayer Player.heal <|
-                "takes a rest, improving their strength."
+                String.join " "
+                    [ "takes a rest, improving their strength by"
+                    , String.fromInt <| Player.healingPotential playerDescription.state
+                    , "points."
+                    ]
 
         Player.Attack dir ->
             let

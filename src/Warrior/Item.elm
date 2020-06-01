@@ -15,6 +15,7 @@ module Warrior.Item exposing
 -}
 type Item
     = Sword
+    | Potion
 
 
 {-| Human readable name of item
@@ -24,3 +25,6 @@ toString item =
     case item of
         Sword ->
             "Sword"
+
+        Potion ->
+            "Potion"

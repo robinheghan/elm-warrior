@@ -1,16 +1,16 @@
 module Warrior.Player exposing
     ( Player, PlayerRole(..), Action(..)
-    , spawnHero, spawnVillain, addItem, addAction, withPosition, attack
-    , position, health, alive, attackDamage, heal, inventory, maxHealth, previousActions
+    , spawnHero, spawnVillain, addItem, addAction, withPosition, attack, heal
+    , position, health, alive, attackDamage, healingPotential, inventory, maxHealth, previousActions
     )
 
 {-| The player record contains all known state for playable, as well as non-playable characters in the game. You'll probably need the functions in this module to make decisions about your next turn.
 
 @docs Player, PlayerRole, Action
 
-@docs spawnHero, spawnVillain, addItem, addAction, withPosition, attack
+@docs spawnHero, spawnVillain, addItem, addAction, withPosition, attack, heal
 
-@docs position, health, alive, attackDamage, heal, inventory, maxHealth, previousActions
+@docs position, health, alive, attackDamage, healingPotential, inventory, maxHealth, previousActions
 
 -}
 
@@ -135,8 +135,12 @@ withPosition coordinate (Player fields) =
 {-| This function will be called by the framework as a result of the Heal action, and can be safely ignored.
 -}
 heal : Player -> Player
-heal (Player fields) =
-    Player { fields | health = min fields.maxHealth (fields.health + 2) }
+heal ((Player fields) as player) =
+    Player
+        { fields
+            | health = min fields.maxHealth (fields.health + healingPotential player)
+            , inventory = List.filter ((/=) Item.Potion) fields.inventory
+        }
 
 
 {-| This function will be called by the framework as a result of the Attack action, and can be safely ignored.
@@ -151,7 +155,18 @@ attack attacker (Player defender) =
 attackDamage : Player -> Int
 attackDamage (Player fields) =
     if List.member Item.Sword fields.inventory then
-        4
+        3
+
+    else
+        1
+
+
+{-| Returns how many points this player will recover as the result of a heal action. Items in the players inventory will be taken into account.
+-}
+healingPotential : Player -> Int
+healingPotential (Player fields) =
+    if List.member Item.Potion fields.inventory then
+        6
 
     else
         1
