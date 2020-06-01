@@ -3,7 +3,7 @@
     "name": "Skinney/elm-warrior",
     "summary": "A framework for learning Elm by programming the intelligence of an Elm Warrior",
     "license": "BSD-3-Clause",
-    "version": "1.2.0",
+    "version": "2.0.0",
     "exposed-modules": [
         "Warrior",
         "Warrior.Coordinate",
