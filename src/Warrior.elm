@@ -2,6 +2,7 @@ module Warrior exposing
     ( Model, Msg
     , PlayerTurnFunction
     , Config, program
+    , MultiplayerConfig, multiplayerProgram
     )
 
 {-| Contains the essential logic for rendering and defining the game. The `Map` and `Player` modules will probably be more interesting.
@@ -9,6 +10,7 @@ module Warrior exposing
 @docs Model, Msg
 @docs PlayerTurnFunction
 @docs Config, program
+@docs MultiplayerConfig, multiplayerProgram
 
 -}
 
@@ -37,6 +39,35 @@ type alias Config =
 program : Config -> Program () Model Msg
 program config =
     Browser.element
+        { init =
+            always <|
+                init
+                    { maps = config.maps
+                    , players = [ ( "Player", config.player ) ]
+                    , msPerTurn = config.msPerTurn
+                    , winCondition = doneWithCurrentMap
+                    }
+        , update = update
+        , view = view
+        , subscriptions = subscriptions config.msPerTurn
+        }
+
+
+{-| Use this config to play with multiple warriors, and with a custom win condition.
+-}
+type alias MultiplayerConfig =
+    { maps : List Map
+    , players : List ( String, PlayerTurnFunction )
+    , msPerTurn : Float
+    , winCondition : List Player -> Map -> Bool
+    }
+
+
+{-| Start a program based of the multiplayer config
+-}
+multiplayerProgram : MultiplayerConfig -> Program () Model Msg
+multiplayerProgram config =
+    Browser.element
         { init = always <| init config
         , update = update
         , view = view
@@ -57,6 +88,7 @@ type alias OngoingModel =
     , currentMap : Map
     , remainingMaps : List Map
     , actionLog : List String
+    , winCondition : List Player -> Map -> Bool
     }
 
 
@@ -73,7 +105,7 @@ type alias PlayerDescription =
     }
 
 
-init : Config -> ( Model, Cmd msg )
+init : MultiplayerConfig -> ( Model, Cmd msg )
 init config =
     case config.maps of
         [] ->
@@ -82,13 +114,18 @@ init config =
             )
 
         first :: rest ->
-            ( modelWithMap [ ( "Player", config.player ) ] first rest
+            ( modelWithMap config.players config.winCondition first rest
             , Cmd.none
             )
 
 
-modelWithMap : List ( String, PlayerTurnFunction ) -> Map -> List Map -> Model
-modelWithMap players currentMap remainingMaps =
+modelWithMap :
+    List ( String, PlayerTurnFunction )
+    -> (List Player -> Map -> Bool)
+    -> Map
+    -> List Map
+    -> Model
+modelWithMap players winCondition currentMap remainingMaps =
     let
         pcs =
             Map.spawnPoints currentMap
@@ -114,6 +151,7 @@ modelWithMap players currentMap remainingMaps =
         , currentMap = currentMap
         , remainingMaps = remainingMaps
         , actionLog = []
+        , winCondition = winCondition
         }
 
 
@@ -130,7 +168,7 @@ update _ model =
             ( model, Cmd.none )
 
         Ongoing state ->
-            if doneWithCurrentMap state then
+            if state.winCondition (List.map .state state.pcs) state.currentMap then
                 case state.remainingMaps of
                     [] ->
                         ( Done
@@ -138,7 +176,7 @@ update _ model =
                         )
 
                     next :: rest ->
-                        ( modelWithMap state.initialPlayers next rest
+                        ( modelWithMap state.initialPlayers state.winCondition next rest
                         , Cmd.none
                         )
 
@@ -282,11 +320,11 @@ playerTurn playerDescription model =
                     }
 
 
-doneWithCurrentMap : OngoingModel -> Bool
-doneWithCurrentMap state =
+doneWithCurrentMap : List Player -> Map -> Bool
+doneWithCurrentMap players currentMap =
     List.any
-        (.state >> Player.position >> Map.isExitPoint state.currentMap)
-        state.pcs
+        (Player.position >> Map.isExitPoint currentMap)
+        players
 
 
 view : Model -> Html msg
