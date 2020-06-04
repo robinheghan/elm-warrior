@@ -18,7 +18,9 @@ import Browser
 import Element exposing (Element)
 import Element.Font as Font
 import Html exposing (Html)
-import Time
+import List.Extra as List
+import Process
+import Task
 import Warrior.Direction as Direction
 import Warrior.Item as Item
 import Warrior.Map as Map exposing (Map)
@@ -49,7 +51,7 @@ program config =
                     }
         , update = update
         , view = view
-        , subscriptions = subscriptions config.msPerTurn
+        , subscriptions = always Sub.none
         }
 
 
@@ -71,7 +73,7 @@ multiplayerProgram config =
         { init = always <| init config
         , update = update
         , view = view
-        , subscriptions = subscriptions config.msPerTurn
+        , subscriptions = always Sub.none
         }
 
 
@@ -89,6 +91,7 @@ type alias OngoingModel =
     , remainingMaps : List Map
     , actionLog : List String
     , winCondition : List Player -> Map -> Bool
+    , updateInterval : Float
     }
 
 
@@ -105,7 +108,7 @@ type alias PlayerDescription =
     }
 
 
-init : MultiplayerConfig -> ( Model, Cmd msg )
+init : MultiplayerConfig -> ( Model, Cmd Msg )
 init config =
     case config.maps of
         [] ->
@@ -114,18 +117,19 @@ init config =
             )
 
         first :: rest ->
-            ( modelWithMap config.players config.winCondition first rest
-            , Cmd.none
+            ( modelWithMap first rest config.players config.winCondition config.msPerTurn
+            , msgAfter config.msPerTurn BeginRound
             )
 
 
 modelWithMap :
-    List ( String, PlayerTurnFunction )
-    -> (List Player -> Map -> Bool)
-    -> Map
+    Map
     -> List Map
+    -> List ( String, PlayerTurnFunction )
+    -> (List Player -> Map -> Bool)
+    -> Float
     -> Model
-modelWithMap players winCondition currentMap remainingMaps =
+modelWithMap currentMap remainingMaps players winCondition updateInterval =
     let
         pcs =
             Map.spawnPoints currentMap
@@ -152,41 +156,85 @@ modelWithMap players winCondition currentMap remainingMaps =
         , remainingMaps = remainingMaps
         , actionLog = []
         , winCondition = winCondition
+        , updateInterval = updateInterval
         }
 
 
 {-| The game message type.
 -}
 type Msg
-    = Step
+    = InitializeMap
+    | BeginRound
+    | TakeTurn String
 
 
-update : msg -> Model -> ( Model, Cmd msg )
-update _ model =
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
     case model of
         Done ->
             ( model, Cmd.none )
 
-        Ongoing state ->
-            if state.winCondition (List.map .state state.pcs) state.currentMap then
-                case state.remainingMaps of
-                    [] ->
-                        ( Done
-                        , Cmd.none
-                        )
+        Ongoing ongoingModel ->
+            ongoingUpdate msg ongoingModel
 
-                    next :: rest ->
-                        ( modelWithMap state.initialPlayers state.winCondition next rest
-                        , Cmd.none
-                        )
 
-            else
-                ( state.pcs
-                    |> List.filter (.state >> Player.alive)
-                    |> List.foldl playerTurn state
-                    |> Ongoing
-                , Cmd.none
-                )
+ongoingUpdate : Msg -> OngoingModel -> ( Model, Cmd Msg )
+ongoingUpdate msg model =
+    case msg of
+        InitializeMap ->
+            case model.remainingMaps of
+                [] ->
+                    ( Done
+                    , Cmd.none
+                    )
+
+                next :: rest ->
+                    ( modelWithMap next rest model.initialPlayers model.winCondition model.updateInterval
+                    , msgAfter model.updateInterval BeginRound
+                    )
+
+        BeginRound ->
+            ( Ongoing model
+            , model.pcs
+                |> List.filter (.state >> Player.alive)
+                |> List.head
+                |> Maybe.map (.id >> TakeTurn >> msgAfter model.updateInterval)
+                |> Maybe.withDefault Cmd.none
+            )
+
+        TakeTurn playerId ->
+            case List.find (\pc -> pc.id == playerId) model.pcs of
+                Nothing ->
+                    -- Something wrong has happened, start from top of the turn order
+                    ( Ongoing model
+                    , msgAfter model.updateInterval BeginRound
+                    )
+
+                Just player ->
+                    let
+                        updatedModel =
+                            playerTurn player model
+                    in
+                    ( Ongoing updatedModel
+                    , if updatedModel.winCondition (List.map .state updatedModel.pcs) updatedModel.currentMap then
+                        msgAfter model.updateInterval InitializeMap
+
+                      else
+                        model.pcs
+                            |> List.dropWhile (\pc -> pc.id /= playerId)
+                            |> List.drop 1
+                            |> List.filter (.state >> Player.alive)
+                            |> List.head
+                            |> Maybe.map (.id >> TakeTurn)
+                            |> Maybe.withDefault BeginRound
+                            |> msgAfter model.updateInterval
+                    )
+
+
+msgAfter : Float -> Msg -> Cmd Msg
+msgAfter updateInterval msg =
+    Process.sleep updateInterval
+        |> Task.perform (always msg)
 
 
 playerTurn : PlayerDescription -> OngoingModel -> OngoingModel
@@ -379,13 +427,3 @@ viewActionLog event =
     Element.paragraph
         [ Font.center ]
         [ Element.text event ]
-
-
-subscriptions : Float -> Model -> Sub Msg
-subscriptions msPerTurn model =
-    case model of
-        Ongoing _ ->
-            Time.every msPerTurn (always Step)
-
-        Done ->
-            Sub.none
