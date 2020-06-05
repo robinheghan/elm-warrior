@@ -15,10 +15,13 @@ module Warrior exposing
 -}
 
 import Browser
+import Color exposing (Color)
 import Element exposing (Element)
-import Element.Font as Font
+import Element.Background as Background
+import Element.Border as Border
 import Html exposing (Html)
 import List.Extra as List
+import Palette.Cubehelix as Palette
 import Process
 import Task
 import Warrior.Direction as Direction
@@ -89,7 +92,7 @@ type alias OngoingModel =
     , pcs : List PlayerDescription
     , currentMap : Map
     , remainingMaps : List Map
-    , actionLog : List String
+    , actionLog : List ( PlayerDescription, String )
     , winCondition : List Player -> Map -> Bool
     , updateInterval : Float
     }
@@ -105,6 +108,7 @@ type alias PlayerDescription =
     { id : String
     , state : Player
     , turnFunction : PlayerTurnFunction
+    , color : Color
     }
 
 
@@ -147,11 +151,33 @@ modelWithMap currentMap remainingMaps players winCondition updateInterval =
             { id = id
             , state = state
             , turnFunction = turnFunc
+            , color = Color.fromRGB ( 0, 0, 0 )
             }
+
+        playerDescriptions =
+            List.append pcs npcs
+                |> List.map2 (\clr pd -> { pd | color = clr }) playerColors
+
+        playerColors =
+            Palette.generate (List.length pcs + List.length npcs + 2)
+                |> List.filter notBlackOrWhite
+
+        notBlackOrWhite clr =
+            let
+                black =
+                    ( 0, 0, 0 )
+
+                white =
+                    ( 255, 255, 255 )
+
+                colorValues =
+                    Color.toRGB clr
+            in
+            not (colorValues == black || colorValues == white)
     in
     Ongoing
         { initialPlayers = players
-        , pcs = List.append pcs npcs
+        , pcs = playerDescriptions
         , currentMap = currentMap
         , remainingMaps = remainingMaps
         , actionLog = []
@@ -263,7 +289,7 @@ playerTurn playerDescription model =
                                 desc
                         )
                         model.pcs
-                , actionLog = String.join " " [ playerDescription.id, event ] :: model.actionLog
+                , actionLog = ( playerDescription, event ) :: model.actionLog
             }
     in
     case playerAction of
@@ -353,7 +379,8 @@ playerTurn playerDescription model =
                                 )
                                 model.pcs
                         , actionLog =
-                            String.join " "
+                            ( playerDescription
+                            , String.join " "
                                 [ "attacks"
                                 , dir
                                     |> Direction.toString
@@ -364,6 +391,7 @@ playerTurn playerDescription model =
                                     |> String.fromInt
                                 , "damage."
                                 ]
+                            )
                                 :: model.actionLog
                     }
 
@@ -386,9 +414,8 @@ view model =
                 let
                     playerPositions =
                         state.pcs
-                            |> List.map .state
-                            |> List.filter Player.alive
-                            |> List.map Player.position
+                            |> List.filter (.state >> Player.alive)
+                            |> List.map (\pd -> ( Player.position pd.state, pd.color ))
                 in
                 Element.column
                     [ Element.centerX
@@ -422,8 +449,25 @@ view model =
         )
 
 
-viewActionLog : String -> Element msg
-viewActionLog event =
-    Element.paragraph
-        [ Font.center ]
-        [ Element.text event ]
+viewActionLog : ( PlayerDescription, String ) -> Element msg
+viewActionLog ( pd, event ) =
+    let
+        ( r, g, b ) =
+            Color.toRGB pd.color
+    in
+    Element.row
+        [ Element.spacing 10 ]
+        [ Element.el
+            [ Element.width <| Element.px 10
+            , Element.height <| Element.px 10
+            , Border.rounded 50
+            , Background.color <| Element.rgb255 (floor r) (floor g) (floor b)
+            ]
+            Element.none
+        , Element.paragraph
+            []
+            [ Element.text pd.id
+            , Element.text " "
+            , Element.text event
+            ]
+        ]

@@ -33,7 +33,6 @@ import Element exposing (Element)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Palette.Cubehelix as Palette
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction as Direction exposing (Direction)
 import Warrior.Item exposing (Item)
@@ -271,30 +270,12 @@ isExitPoint ((Map fields) as map) cord =
 
 {-| Framework function
 -}
-view : List Coordinate -> Map -> Element a
+view : List ( Coordinate, Color ) -> Map -> Element a
 view playerPositions ((Map fields) as map) =
     let
-        playerIndices =
-            List.map (\cord -> translateCoordinates cord map) playerPositions
-
         playerColors =
-            Palette.generate (List.length playerIndices + 2)
-                |> List.filter notBlackOrWhite
-                |> List.map2 Tuple.pair playerIndices
+            List.map (\( cord, clr ) -> ( translateCoordinates cord map, clr )) playerPositions
                 |> Dict.fromList
-
-        notBlackOrWhite clr =
-            let
-                black =
-                    ( 0, 0, 0 )
-
-                white =
-                    ( 255, 255, 255 )
-
-                colorValues =
-                    Color.toRGB clr
-            in
-            not (colorValues == black || colorValues == white)
 
         firstAndLast =
             Array.initialize (fields.tilesPerRow + 2) (always Wall)
