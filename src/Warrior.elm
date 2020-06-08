@@ -84,7 +84,7 @@ multiplayerProgram config =
 -}
 type Model
     = Ongoing OngoingModel
-    | Done
+    | Done (Maybe String)
 
 
 type alias OngoingModel =
@@ -116,7 +116,7 @@ init : MultiplayerConfig -> ( Model, Cmd Msg )
 init config =
     case config.maps of
         [] ->
-            ( Done
+            ( Done Nothing
             , Cmd.none
             )
 
@@ -189,7 +189,7 @@ modelWithMap currentMap remainingMaps players winCondition updateInterval =
 {-| The game message type.
 -}
 type Msg
-    = InitializeMap
+    = InitializeMap (Maybe String)
     | BeginRound
     | TakeTurn String
 
@@ -197,7 +197,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case model of
-        Done ->
+        Done _ ->
             ( model, Cmd.none )
 
         Ongoing ongoingModel ->
@@ -207,10 +207,10 @@ update msg model =
 ongoingUpdate : Msg -> OngoingModel -> ( Model, Cmd Msg )
 ongoingUpdate msg model =
     case msg of
-        InitializeMap ->
+        InitializeMap maybeLastWinner ->
             case model.remainingMaps of
                 [] ->
-                    ( Done
+                    ( Done maybeLastWinner
                     , Cmd.none
                     )
 
@@ -220,13 +220,22 @@ ongoingUpdate msg model =
                     )
 
         BeginRound ->
-            ( Ongoing model
-            , model.pcs
-                |> List.filter (.state >> Player.alive)
-                |> List.head
-                |> Maybe.map (.id >> TakeTurn >> msgAfter model.updateInterval)
-                |> Maybe.withDefault Cmd.none
-            )
+            let
+                possibleFirstLivingPlayer =
+                    model.pcs
+                        |> List.filter (.state >> Player.alive)
+                        |> List.head
+            in
+            case possibleFirstLivingPlayer of
+                Nothing ->
+                    ( Done Nothing
+                    , Cmd.none
+                    )
+
+                Just firstLivingPlayer ->
+                    ( Ongoing model
+                    , msgAfter model.updateInterval (TakeTurn firstLivingPlayer.id)
+                    )
 
         TakeTurn playerId ->
             case List.find (\pc -> pc.id == playerId) model.pcs of
@@ -243,7 +252,14 @@ ongoingUpdate msg model =
                     in
                     ( Ongoing updatedModel
                     , if updatedModel.winCondition (List.map .state updatedModel.pcs) updatedModel.currentMap then
-                        msgAfter model.updateInterval InitializeMap
+                        let
+                            possibleSurvivingPlayer =
+                                updatedModel.pcs
+                                    |> List.filter (.state >> Player.alive)
+                                    |> List.head
+                                    |> Maybe.map .id
+                        in
+                        msgAfter model.updateInterval (InitializeMap possibleSurvivingPlayer)
 
                       else
                         model.pcs
@@ -440,12 +456,22 @@ view model =
                         (List.map viewActionLog state.actionLog)
                     ]
 
-            Done ->
+            Done winningPlayerId ->
                 Element.el
                     [ Element.centerX
                     , Element.centerY
                     ]
-                    (Element.text "Congratulations!")
+                    (Element.text <|
+                        case winningPlayerId of
+                            Just id ->
+                                String.join " "
+                                    [ "Congratulations"
+                                    , id
+                                    ]
+
+                            Nothing ->
+                                "Congratulations!"
+                    )
         )
 
 
