@@ -122,7 +122,7 @@ init config =
 
         first :: rest ->
             ( modelWithMap first rest config.players config.winCondition config.msPerTurn
-            , msgAfter config.msPerTurn BeginRound
+            , msgAfter 0 BeginRound
             )
 
 
@@ -216,7 +216,7 @@ ongoingUpdate msg model =
 
                 next :: rest ->
                     ( modelWithMap next rest model.initialPlayers model.winCondition model.updateInterval
-                    , msgAfter model.updateInterval BeginRound
+                    , msgAfter 0 BeginRound
                     )
 
         BeginRound ->
@@ -234,7 +234,7 @@ ongoingUpdate msg model =
 
                 Just firstLivingPlayer ->
                     ( Ongoing model
-                    , msgAfter model.updateInterval (TakeTurn firstLivingPlayer.id)
+                    , msgAfter 0 (TakeTurn firstLivingPlayer.id)
                     )
 
         TakeTurn playerId ->
