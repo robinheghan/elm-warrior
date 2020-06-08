@@ -1,6 +1,6 @@
 module Warrior.Map exposing
     ( Map, Config, Tile(..)
-    , canMoveOnto, canMoveOntoTile, isExitPoint, look
+    , canMoveOnto, canMoveOntoTile, isExitPoint, look, lookDown
     , init, withExitPoint, withItem, withNPC, withSpawnPoint, withWalledArea, armLastNpc, setNpcs, withDescription
     , coordinateFrom, npcs, removeItem, spawnPoints, view
     )
@@ -12,7 +12,7 @@ module Warrior.Map exposing
 
 # Player API
 
-@docs canMoveOnto, canMoveOntoTile, isExitPoint, look
+@docs canMoveOnto, canMoveOntoTile, isExitPoint, look, lookDown
 
 
 # Creation API
@@ -444,6 +444,28 @@ lookHelp dir from ((Map fields) as map) result =
                     wantedCoordinate
                     map
                     (tile :: result)
+
+
+{-| Describe what is at the players feet. Useful for deciding if there's an item worth picking up.
+-}
+lookDown : Player -> Map -> Tile
+lookDown player ((Map fields) as map) =
+    let
+        playerPosition =
+            Player.position player
+
+        tile =
+            playerPosition
+                |> (\c -> translateCoordinates c map)
+                |> (\idx -> Array.get idx fields.tiles)
+                |> Maybe.withDefault Wall
+    in
+    case tile of
+        Empty ->
+            tileAtPosition playerPosition fields
+
+        _ ->
+            tile
 
 
 tileAtPosition : Coordinate -> Internals -> Tile
