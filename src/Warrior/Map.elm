@@ -462,7 +462,11 @@ lookDown player ((Map fields) as map) =
     in
     case tile of
         Empty ->
-            tileAtPosition playerPosition fields
+            fields.items
+                |> List.filter (\( itemCord, _ ) -> itemCord == playerPosition)
+                |> List.head
+                |> Maybe.map (Item << Tuple.second)
+                |> Maybe.withDefault Empty
 
         _ ->
             tile
