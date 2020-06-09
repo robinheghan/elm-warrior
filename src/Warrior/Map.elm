@@ -145,9 +145,9 @@ withWalledArea cord1 cord2 ((Map fields) as map) =
 
 {-| Places a villain on the specific coordinate of the map, using the supplied function to know what to do each turn. You can find pre-made turn functions in the `Warrior.Npc` module.
 -}
-withNPC : Coordinate -> (Player -> Map -> Player.Action) -> Map -> Map
-withNPC cord turnFunc (Map fields) =
-    Map { fields | npcs = ( Player.spawnVillain cord, turnFunc ) :: fields.npcs }
+withNPC : String -> Coordinate -> (Player -> Map -> Player.Action) -> Map -> Map
+withNPC id cord turnFunc (Map fields) =
+    Map { fields | npcs = ( Player.spawnVillain id cord, turnFunc ) :: fields.npcs }
 
 
 {-| Replace all villains with the provided list. Might be less code than using multiple `withNPC` calls.

@@ -1,16 +1,16 @@
 module Warrior.Player exposing
     ( Player, PlayerRole(..), Action(..)
-    , spawnHero, spawnVillain, addItem, addAction, withPosition, attack, heal
-    , position, health, alive, attackDamage, healingPotential, inventory, maxHealth, previousActions
+    , spawnHero, spawnVillain, addItem, withPosition, attack, heal
+    , id, position, health, alive, attackDamage, healingPotential, inventory, maxHealth
     )
 
 {-| The player record contains all known state for playable, as well as non-playable characters in the game. You'll probably need the functions in this module to make decisions about your next turn.
 
 @docs Player, PlayerRole, Action
 
-@docs spawnHero, spawnVillain, addItem, addAction, withPosition, attack, heal
+@docs spawnHero, spawnVillain, addItem, withPosition, attack, heal
 
-@docs position, health, alive, attackDamage, healingPotential, inventory, maxHealth, previousActions
+@docs id, position, health, alive, attackDamage, healingPotential, inventory, maxHealth
 
 -}
 
@@ -33,10 +33,10 @@ type PlayerRole
 
 
 type alias Internals =
-    { playerRole : PlayerRole
+    { id : String
+    , playerRole : PlayerRole
     , spawnPosition : Coordinate
     , currentPosition : Coordinate
-    , previousActions : List ( Player, Action )
     , health : Int
     , maxHealth : Int
     , inventory : List Item
@@ -55,13 +55,13 @@ type Action
 
 {-| Initializes a hero. You do not need to concern yourself with this function, as it will be called by the framework.
 -}
-spawnHero : Coordinate -> Player
-spawnHero cord =
+spawnHero : String -> Coordinate -> Player
+spawnHero id_ cord =
     Player
-        { playerRole = Hero
+        { id = id_
+        , playerRole = Hero
         , spawnPosition = cord
         , currentPosition = cord
-        , previousActions = []
         , health = 10
         , maxHealth = 10
         , inventory = []
@@ -70,17 +70,24 @@ spawnHero cord =
 
 {-| Initializes a villain. You do not need to concern yourself with this function, as it will be called by the framework.
 -}
-spawnVillain : Coordinate -> Player
-spawnVillain cord =
+spawnVillain : String -> Coordinate -> Player
+spawnVillain id_ cord =
     Player
-        { playerRole = Villain
+        { id = id_
+        , playerRole = Villain
         , spawnPosition = cord
         , currentPosition = cord
-        , previousActions = []
         , health = 10
         , maxHealth = 10
         , inventory = []
         }
+
+
+{-| The id of the player
+-}
+id : Player -> String
+id (Player fields) =
+    fields.id
 
 
 {-| Retrieve the current position of a player.
@@ -116,13 +123,6 @@ inventory (Player fields) =
 addItem : Item -> Player -> Player
 addItem item (Player fields) =
     Player { fields | inventory = item :: fields.inventory }
-
-
-{-| Get a list of previous actions, and the player state before those actions occured. The list is in reverse order. Meaning that the previous action performed by the player is the first item. If the list is empty, this must be the first turn of the game.
--}
-previousActions : Player -> List ( Player, Action )
-previousActions (Player fields) =
-    fields.previousActions
 
 
 {-| Change the current position of a player. This will be used by the framework to advance the state of the game. You do not need to concern yourself with this function.
@@ -177,15 +177,3 @@ healingPotential (Player fields) =
 alive : Player -> Bool
 alive (Player fields) =
     fields.health > 0
-
-
-{-| Adds an action to the list of previous actions. Is called by the framework and can be safely ignored.
--}
-addAction : Action -> Player -> Player
-addAction action (Player fields) =
-    let
-        -- We need to do this, as the recursive history really destroys performance
-        playerWithoutHistory =
-            Player { fields | previousActions = [] }
-    in
-    Player <| { fields | previousActions = ( playerWithoutHistory, action ) :: fields.previousActions }

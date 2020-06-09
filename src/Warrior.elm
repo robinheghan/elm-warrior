@@ -25,6 +25,7 @@ import Palette.Cubehelix as Palette
 import Process
 import Task
 import Warrior.Direction as Direction
+import Warrior.History as History exposing (History)
 import Warrior.Item as Item
 import Warrior.Map as Map exposing (Map)
 import Warrior.Player as Player exposing (Player)
@@ -92,6 +93,7 @@ type alias OngoingModel =
     , pcs : List PlayerDescription
     , currentMap : Map
     , remainingMaps : List Map
+    , mapHistory : History
     , actionLog : List ( PlayerDescription, String )
     , winCondition : List Player -> Map -> Bool
     , updateInterval : Float
@@ -101,12 +103,11 @@ type alias OngoingModel =
 {-| The type signature of an AI turn function
 -}
 type alias PlayerTurnFunction =
-    Player -> Map -> Player.Action
+    Player -> Map -> History -> Player.Action
 
 
 type alias PlayerDescription =
-    { id : String
-    , state : Player
+    { state : Player
     , turnFunction : PlayerTurnFunction
     , color : Color
     }
@@ -137,22 +138,23 @@ modelWithMap currentMap remainingMaps players winCondition updateInterval =
     let
         pcs =
             Map.spawnPoints currentMap
-                |> List.map Player.spawnHero
                 |> List.map2 toPlayerDescription players
 
-        npcs =
-            Map.npcs currentMap
-                |> List.indexedMap
-                    (\idx ( state, turnFunc ) ->
-                        toPlayerDescription ( "NPC " ++ String.fromInt idx, turnFunc ) state
-                    )
-
-        toPlayerDescription ( id, turnFunc ) state =
-            { id = id
-            , state = state
+        toPlayerDescription ( id, turnFunc ) cord =
+            { state = Player.spawnHero id cord
             , turnFunction = turnFunc
             , color = Color.fromRGB ( 0, 0, 0 )
             }
+
+        npcs =
+            Map.npcs currentMap
+                |> List.map
+                    (\( state, turnFunc ) ->
+                        { state = state
+                        , turnFunction = turnFunc
+                        , color = Color.fromRGB ( 0, 0, 0 )
+                        }
+                    )
 
         playerDescriptions =
             List.append pcs npcs
@@ -180,6 +182,7 @@ modelWithMap currentMap remainingMaps players winCondition updateInterval =
         , pcs = playerDescriptions
         , currentMap = currentMap
         , remainingMaps = remainingMaps
+        , mapHistory = History.init
         , actionLog = []
         , winCondition = winCondition
         , updateInterval = updateInterval
@@ -234,11 +237,11 @@ ongoingUpdate msg model =
 
                 Just firstLivingPlayer ->
                     ( Ongoing model
-                    , msgAfter 0 (TakeTurn firstLivingPlayer.id)
+                    , msgAfter 0 (TakeTurn (Player.id firstLivingPlayer.state))
                     )
 
         TakeTurn playerId ->
-            case List.find (\pc -> pc.id == playerId) model.pcs of
+            case List.find (\pc -> Player.id pc.state == playerId) model.pcs of
                 Nothing ->
                     -- Something wrong has happened, start from top of the turn order
                     ( Ongoing model
@@ -257,17 +260,17 @@ ongoingUpdate msg model =
                                 updatedModel.pcs
                                     |> List.filter (.state >> Player.alive)
                                     |> List.head
-                                    |> Maybe.map .id
+                                    |> Maybe.map (.state >> Player.id)
                         in
                         msgAfter model.updateInterval (InitializeMap possibleSurvivingPlayer)
 
                       else
                         model.pcs
-                            |> List.dropWhile (\pc -> pc.id /= playerId)
+                            |> List.dropWhile (\pc -> Player.id pc.state /= playerId)
                             |> List.drop 1
                             |> List.filter (.state >> Player.alive)
                             |> List.head
-                            |> Maybe.map (.id >> TakeTurn)
+                            |> Maybe.map (.state >> Player.id >> TakeTurn)
                             |> Maybe.withDefault BeginRound
                             |> msgAfter model.updateInterval
                     )
@@ -294,17 +297,18 @@ playerTurn playerDescription model =
                     List.map
                         (\desc ->
                             if desc == playerDescription then
-                                { desc
-                                    | state =
-                                        desc.state
-                                            |> Player.addAction playerAction
-                                            |> fn
-                                }
+                                { desc | state = fn desc.state }
 
                             else
                                 desc
                         )
                         model.pcs
+                , mapHistory =
+                    History.record
+                        playerDescription.state
+                        updatedMap
+                        playerAction
+                        model.mapHistory
                 , actionLog = ( playerDescription, event ) :: model.actionLog
             }
     in
@@ -384,16 +388,19 @@ playerTurn playerDescription model =
                         | pcs =
                             List.map
                                 (\desc ->
-                                    if desc.state == playerDescription.state then
-                                        { desc | state = Player.addAction playerAction desc.state }
-
-                                    else if desc.state == attackedPlayer then
+                                    if desc.state == attackedPlayer then
                                         { desc | state = Player.attack playerDescription.state desc.state }
 
                                     else
                                         desc
                                 )
                                 model.pcs
+                        , mapHistory =
+                            History.record
+                                playerDescription.state
+                                updatedMap
+                                playerAction
+                                model.mapHistory
                         , actionLog =
                             ( playerDescription
                             , String.join " "
@@ -492,7 +499,7 @@ viewActionLog ( pd, event ) =
             Element.none
         , Element.paragraph
             []
-            [ Element.text pd.id
+            [ Element.text (Player.id pd.state)
             , Element.text " "
             , Element.text event
             ]
