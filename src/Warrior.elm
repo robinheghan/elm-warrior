@@ -26,15 +26,16 @@ import Process
 import Task
 import Warrior.Direction as Direction
 import Warrior.History as History exposing (History)
+import Warrior.Internal.Map as Map exposing (Map)
 import Warrior.Item as Item
-import Warrior.Map as Map exposing (Map)
+import Warrior.Map.Builder as MapTemplate
 import Warrior.Player as Player exposing (Player)
 
 
 {-| How would you like the game to be played? Which maps would you like to see the player try on, and how many milliseconds should we wait before showing the next turn?
 -}
 type alias Config =
-    { maps : List Map
+    { maps : List MapTemplate.Builder
     , player : PlayerTurnFunction
     , msPerTurn : Float
     }
@@ -62,7 +63,7 @@ program config =
 {-| Use this config to play with multiple warriors, and with a custom win condition.
 -}
 type alias MultiplayerConfig =
-    { maps : List Map
+    { maps : List MapTemplate.Builder
     , players : List ( String, PlayerTurnFunction )
     , msPerTurn : Float
     , winCondition : List Player -> Map -> Bool
@@ -92,7 +93,7 @@ type alias OngoingModel =
     { initialPlayers : List ( String, PlayerTurnFunction )
     , pcs : List PlayerDescription
     , currentMap : Map
-    , remainingMaps : List Map
+    , remainingMaps : List MapTemplate.Builder
     , mapHistory : History
     , actionLog : List ( PlayerDescription, String )
     , winCondition : List Player -> Map -> Bool
@@ -128,8 +129,8 @@ init config =
 
 
 modelWithMap :
-    Map
-    -> List Map
+    MapTemplate.Builder
+    -> List MapTemplate.Builder
     -> List ( String, PlayerTurnFunction )
     -> (List Player -> Map -> Bool)
     -> Float
@@ -137,7 +138,7 @@ modelWithMap :
 modelWithMap currentMap remainingMaps players winCondition updateInterval =
     let
         pcs =
-            Map.spawnPoints currentMap
+            MapTemplate.spawnPoints currentMap
                 |> List.map2 toPlayerDescription players
 
         toPlayerDescription ( id, turnFunc ) cord =
@@ -147,7 +148,7 @@ modelWithMap currentMap remainingMaps players winCondition updateInterval =
             }
 
         npcs =
-            Map.npcs currentMap
+            MapTemplate.npcs currentMap
                 |> List.map
                     (\( state, turnFunc ) ->
                         { state = state
@@ -180,7 +181,7 @@ modelWithMap currentMap remainingMaps players winCondition updateInterval =
     Ongoing
         { initialPlayers = players
         , pcs = playerDescriptions
-        , currentMap = currentMap
+        , currentMap = MapTemplate.build currentMap
         , remainingMaps = remainingMaps
         , mapHistory = History.init
         , actionLog = []
@@ -286,10 +287,10 @@ playerTurn : PlayerDescription -> OngoingModel -> OngoingModel
 playerTurn playerDescription model =
     let
         updatedMap =
-            Map.setNpcs (List.map (\desc -> ( desc.state, desc.turnFunction )) model.pcs) model.currentMap
+            Map.setNpcs (List.map .state model.pcs) model.currentMap
 
         playerAction =
-            playerDescription.turnFunction playerDescription.state updatedMap
+            playerDescription.turnFunction playerDescription.state updatedMap model.mapHistory
 
         updatePlayer fn event =
             { model

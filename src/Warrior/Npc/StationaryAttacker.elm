@@ -7,14 +7,16 @@ module Warrior.Npc.StationaryAttacker exposing (takeTurn)
 -}
 
 import Warrior.Direction as Direction
+import Warrior.History exposing (History)
 import Warrior.Map as Map exposing (Map)
 import Warrior.Player as Player exposing (Action(..), Player)
+import Warrior.Tile as Tile
 
 
 {-| Use this function with the `withNPC` function of the `Map` module to add dangerous opponents to a map.
 -}
-takeTurn : Player -> Map -> Action
-takeTurn player map =
+takeTurn : Player -> Map -> History -> Action
+takeTurn player map _ =
     let
         currentPosition =
             Player.position player
@@ -22,7 +24,7 @@ takeTurn player map =
         canAttack direction =
             Map.look direction currentPosition map
                 |> List.head
-                |> Maybe.map ((==) Map.Player)
+                |> Maybe.map Tile.isPlayer
                 |> Maybe.withDefault False
     in
     Direction.all

@@ -21,7 +21,8 @@ module Warrior.Maps exposing
 -}
 
 import Warrior.Item as Item
-import Warrior.Map as Map exposing (Map)
+import Warrior.Map exposing (Map)
+import Warrior.Map.Builder as Map
 import Warrior.Npc.Dummy as Dummy
 import Warrior.Npc.StationaryAttacker as StationaryAttacker
 
@@ -73,6 +74,7 @@ straight =
         |> Map.withDescription "The goal for these first couple of maps is simply to reach that green area, also known as the exit point. Let's see if we can reach it."
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 4, y = 0 }
+        |> Map.build
 
 
 {-| -}
@@ -82,6 +84,7 @@ inverseL =
         |> Map.withWalledArea { x = 0, y = 1 } { x = 3, y = 4 }
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 4, y = 4 }
+        |> Map.build
 
 
 {-| -}
@@ -94,6 +97,7 @@ loop =
         |> Map.withWalledArea { x = 5, y = 1 } { x = 5, y = 5 }
         |> Map.withWalledArea { x = 5, y = 5 } { x = 1, y = 5 }
         |> Map.withWalledArea { x = 1, y = 5 } { x = 1, y = 3 }
+        |> Map.build
 
 
 {-| -}
@@ -109,6 +113,7 @@ withDeadEndLeft =
         |> Map.withWalledArea { x = 4, y = 1 } { x = 5, y = 2 }
         |> Map.withWalledArea { x = 4, y = 4 } { x = 6, y = 6 }
         |> Map.withWalledArea { x = 0, y = 6 } { x = 0, y = 6 }
+        |> Map.build
 
 
 {-| -}
@@ -124,6 +129,7 @@ withDeadEndRight =
         |> Map.withWalledArea { x = 4, y = 1 } { x = 5, y = 2 }
         |> Map.withWalledArea { x = 4, y = 4 } { x = 6, y = 6 }
         |> Map.withWalledArea { x = 0, y = 6 } { x = 0, y = 6 }
+        |> Map.build
 
 
 {-| -}
@@ -132,6 +138,7 @@ openSpace =
     Map.init { rows = 7, columns = 7 }
         |> Map.withSpawnPoint { x = 1, y = 1 }
         |> Map.withExitPoint { x = 5, y = 5 }
+        |> Map.build
 
 
 {-| -}
@@ -140,6 +147,7 @@ openSpaceReverse =
     Map.init { rows = 7, columns = 7 }
         |> Map.withSpawnPoint { x = 5, y = 5 }
         |> Map.withExitPoint { x = 1, y = 1 }
+        |> Map.build
 
 
 
@@ -154,6 +162,7 @@ straightGuard =
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC "Dummy" { x = 3, y = 0 } Dummy.takeTurn
+        |> Map.build
 
 
 {-| -}
@@ -165,6 +174,7 @@ straightPowerfulGuard =
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC "Guard" { x = 3, y = 0 } StationaryAttacker.takeTurn
         |> Map.armLastNpc Item.Sword
+        |> Map.build
 
 
 {-| -}
@@ -176,6 +186,7 @@ straightGuardPickupSword =
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNPC "Guard" { x = 4, y = 0 } StationaryAttacker.takeTurn
         |> Map.withItem { x = 2, y = 0 } Item.Sword
+        |> Map.build
 
 
 {-| -}
@@ -188,6 +199,7 @@ straightGuardPickupPotion =
         |> Map.withNPC "Guard" { x = 4, y = 0 } StationaryAttacker.takeTurn
         |> Map.armLastNpc Item.Sword
         |> Map.withItem { x = 2, y = 0 } Item.Potion
+        |> Map.build
 
 
 {-| -}
@@ -207,3 +219,4 @@ dungeon =
         |> Map.armLastNpc Item.Sword
         |> Map.withItem { x = 6, y = 4 } Item.Sword
         |> Map.withItem { x = 0, y = 2 } Item.Potion
+        |> Map.build
