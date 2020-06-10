@@ -28,8 +28,10 @@ import Warrior.Direction as Direction
 import Warrior.History as History exposing (History)
 import Warrior.Internal.Map as Map exposing (Map)
 import Warrior.Item as Item
+import Warrior.Map as TopMap
 import Warrior.Map.Builder as MapTemplate
 import Warrior.Player as Player exposing (Player)
+import Warrior.Tile as Tile
 
 
 {-| How would you like the game to be played? Which maps would you like to see the player try on, and how many milliseconds should we wait before showing the next turn?
@@ -319,11 +321,16 @@ playerTurn playerDescription model =
 
         Player.Move dir ->
             let
-                newCoordinate =
-                    Map.coordinateFrom dir (Player.position playerDescription.state)
+                targetCoordinate =
+                    Player.position playerDescription.state
+                        |> Map.coordinateFrom dir
+
+                canMove =
+                    Map.tileAtPosition targetCoordinate updatedMap
+                        |> Tile.canMoveOnto
             in
-            if Map.canMoveOnto newCoordinate updatedMap then
-                updatePlayer (Player.withPosition newCoordinate) <|
+            if canMove then
+                updatePlayer (Player.withPosition targetCoordinate) <|
                     String.join " "
                         [ "moves"
                         , dir
@@ -423,7 +430,7 @@ playerTurn playerDescription model =
 doneWithCurrentMap : List Player -> Map -> Bool
 doneWithCurrentMap players currentMap =
     List.any
-        (Player.position >> Map.isExitPoint currentMap)
+        (\p -> TopMap.isExit (Player.position p) currentMap)
         players
 
 

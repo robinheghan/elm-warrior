@@ -72,3 +72,22 @@ isItem tile =
 
         _ ->
             False
+
+
+canMoveOnto : Tile -> Bool
+canMoveOnto tile =
+    case tile of
+        Empty ->
+            True
+
+        Item _ ->
+            True
+
+        Exit ->
+            True
+
+        SpawnPoint ->
+            True
+
+        _ ->
+            False

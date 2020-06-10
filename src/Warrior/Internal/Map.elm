@@ -1,7 +1,7 @@
 module Warrior.Internal.Map exposing
     ( Map(..)
-    , canMoveOnto, canMoveOntoTile, isExitPoint, look, lookDown
-    , coordinateFrom, setNpcs, removeItem, spawnPoints, view
+    , look, lookDown
+    , tileAtPosition, coordinateFrom, setNpcs, removeItem, spawnPoints, view
     )
 
 {-| The functions in this module allows you to create your own maps, or simply ask questions about the map currently being played.
@@ -11,12 +11,12 @@ module Warrior.Internal.Map exposing
 
 # Player API
 
-@docs canMoveOnto, canMoveOntoTile, isExitPoint, look, lookDown
+@docs look, lookDown
 
 
 # Internals
 
-@docs coordinateFrom, setNpcs, removeItem, spawnPoints, view
+@docs tileAtPosition, coordinateFrom, setNpcs, removeItem, spawnPoints, view
 
 -}
 
@@ -107,11 +107,6 @@ indexToCoordinate fields index =
     }
 
 
-updateTiles : (Array Tile -> Array Tile) -> Map -> Map
-updateTiles fn (Map fields) =
-    Map { fields | tiles = fn fields.tiles }
-
-
 {-| A list of all points where players can spawn.
 -}
 spawnPoints : Map -> List Coordinate
@@ -120,15 +115,6 @@ spawnPoints (Map fields) =
         |> Array.filter (\( _, tile ) -> tile == SpawnPoint)
         |> Array.map (Tuple.first >> indexToCoordinate fields)
         |> Array.toList
-
-
-{-| Checks to see if a specific coordinate on the map is an exit point.
--}
-isExitPoint : Map -> Coordinate -> Bool
-isExitPoint ((Map fields) as map) cord =
-    Array.get (translateCoordinates cord map) fields.tiles
-        |> Maybe.map ((==) Exit)
-        |> Maybe.withDefault False
 
 
 {-| Framework function
@@ -182,7 +168,7 @@ mapTile fields index originalTile =
             coordinate =
                 indexToCoordinate fields index
         in
-        tileAtPosition coordinate fields
+        tileAtPosition coordinate (Map fields)
 
 
 viewTile : Dict Int Color -> Int -> Tile -> Element a
@@ -296,7 +282,7 @@ lookHelp dir from ((Map fields) as map) result =
             Empty ->
                 let
                     updatedResult =
-                        tileAtPosition wantedCoordinate fields
+                        tileAtPosition wantedCoordinate map
                             :: result
                 in
                 lookHelp dir wantedCoordinate map updatedResult
@@ -335,8 +321,8 @@ lookDown player ((Map fields) as map) =
             tile
 
 
-tileAtPosition : Coordinate -> Internals -> Tile
-tileAtPosition cord fields =
+tileAtPosition : Coordinate -> Map -> Tile
+tileAtPosition cord (Map fields) =
     let
         possiblePlayer =
             fields.npcs
@@ -375,52 +361,3 @@ coordinateFrom dir start =
 
         Direction.Down ->
             { start | y = start.y + 1 }
-
-
-{-| Checks if a Move action can be performed.
--}
-canMoveOnto : Coordinate -> Map -> Bool
-canMoveOnto cord ((Map fields) as map) =
-    if not (coordinatesInBound cord map) then
-        False
-
-    else
-        let
-            tile =
-                translateCoordinates cord map
-                    |> (\idx -> Array.get idx fields.tiles)
-                    |> Maybe.withDefault Wall
-        in
-        case tile of
-            Wall ->
-                False
-
-            _ ->
-                let
-                    playerCoordinates =
-                        fields.npcs
-                            |> List.filter Player.alive
-                            |> List.map Player.position
-                in
-                not <| List.member cord playerCoordinates
-
-
-{-| Checks if a Move action can be formed onto the given tile.
--}
-canMoveOntoTile : Tile -> Bool
-canMoveOntoTile tile =
-    case tile of
-        Empty ->
-            True
-
-        Item _ ->
-            True
-
-        Exit ->
-            True
-
-        SpawnPoint ->
-            True
-
-        _ ->
-            False
