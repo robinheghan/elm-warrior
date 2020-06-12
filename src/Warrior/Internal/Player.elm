@@ -17,6 +17,7 @@ module Warrior.Internal.Player exposing
     , withPosition
     )
 
+import List.Extra as List
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction exposing (Direction)
 import Warrior.Item as Item exposing (Item)
@@ -116,7 +117,7 @@ heal ((Player fields) as player) =
     Player
         { fields
             | health = min fields.maxHealth (fields.health + healingPotential player)
-            , inventory = List.filter ((/=) Item.Potion) fields.inventory
+            , inventory = List.remove Item.Potion fields.inventory
         }
 
 
