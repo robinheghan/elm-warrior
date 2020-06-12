@@ -4,8 +4,9 @@ import Array exposing (Array)
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.History exposing (History)
 import Warrior.Internal.Map as Map exposing (Map)
+import Warrior.Internal.Player as Player
 import Warrior.Item exposing (Item)
-import Warrior.Player as Player exposing (Player)
+import Warrior.Player as PublicPlayer exposing (Player)
 import Warrior.Tile as Tile exposing (Tile)
 
 
@@ -20,7 +21,7 @@ type alias Internals =
     , tilesPerRow : Int
     , tiles : Array Tile
     , items : List ( Coordinate, Item )
-    , npcs : List ( Player, Player -> Map -> History -> Player.Action )
+    , npcs : List ( Player, Player -> Map -> History -> PublicPlayer.Action )
     }
 
 
@@ -111,7 +112,7 @@ withWalledArea cord1 cord2 ((Builder fields) as map) =
 
 {-| Places a villain on the specific coordinate of the map, using the supplied function to know what to do each turn. You can find pre-made turn functions in the `Warrior.Npc` module.
 -}
-withNPC : String -> Coordinate -> (Player -> Map -> History -> Player.Action) -> Builder -> Builder
+withNPC : String -> Coordinate -> (Player -> Map -> History -> PublicPlayer.Action) -> Builder -> Builder
 withNPC id cord turnFunc (Builder fields) =
     Builder { fields | npcs = ( Player.spawnVillain id cord, turnFunc ) :: fields.npcs }
 
@@ -149,7 +150,7 @@ spawnPoints (Builder fields) =
         |> Array.toList
 
 
-npcs : Builder -> List ( Player, Player -> Map -> History -> Player.Action )
+npcs : Builder -> List ( Player, Player -> Map -> History -> PublicPlayer.Action )
 npcs (Builder fields) =
     fields.npcs
 

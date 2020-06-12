@@ -1,24 +1,14 @@
 module Warrior.Internal.Map exposing
     ( Map(..)
-    , look, lookDown
-    , tileAtPosition, coordinateFrom, setNpcs, removeItem, spawnPoints, view
+    , coordinateFrom
+    , look
+    , lookDown
+    , removeItem
+    , setNpcs
+    , spawnPoints
+    , tileAtPosition
+    , view
     )
-
-{-| The functions in this module allows you to create your own maps, or simply ask questions about the map currently being played.
-
-@docs Map
-
-
-# Player API
-
-@docs look, lookDown
-
-
-# Internals
-
-@docs tileAtPosition, coordinateFrom, setNpcs, removeItem, spawnPoints, view
-
--}
 
 import Array exposing (Array)
 import Color exposing (Color)
@@ -30,13 +20,12 @@ import Element.Font as Font
 import List.Extra as List
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction as Direction exposing (Direction)
+import Warrior.Internal.Player as Player
 import Warrior.Item exposing (Item)
-import Warrior.Player as Player exposing (Player)
+import Warrior.Player exposing (Player)
 import Warrior.Tile exposing (Tile(..))
 
 
-{-| A map, or level.
--}
 type Map
     = Map Internals
 
@@ -50,15 +39,11 @@ type alias Internals =
     }
 
 
-{-| Replace all villains with the provided list. Might be less code than using multiple `withNPC` calls.
--}
 setNpcs : List Player -> Map -> Map
 setNpcs newNpcs (Map fields) =
     Map { fields | npcs = newNpcs }
 
 
-{-| Removes an item from the map. This function can be ignored as it will be called by the framework.
--}
 removeItem : Coordinate -> Map -> Maybe ( Item, Map )
 removeItem cord (Map fields) =
     let
@@ -107,8 +92,6 @@ indexToCoordinate fields index =
     }
 
 
-{-| A list of all points where players can spawn.
--}
 spawnPoints : Map -> List Coordinate
 spawnPoints (Map fields) =
     Array.indexedMap Tuple.pair fields.tiles
@@ -117,8 +100,6 @@ spawnPoints (Map fields) =
         |> Array.toList
 
 
-{-| Framework function
--}
 view : List ( Coordinate, Color ) -> Map -> Element a
 view playerPositions ((Map fields) as map) =
     let
@@ -243,12 +224,6 @@ tileColor tile =
             Element.rgba255 0 255 0 0.4
 
 
-
--- Player API
-
-
-{-| Provides a list of everything the player can see in a specific direction. The first item of the list will be the one tile away from the player. The second item will be two tiles away, etc.
--}
 look : Direction -> Coordinate -> Map -> List Tile
 look dir from map =
     lookHelp dir from map []
@@ -295,8 +270,6 @@ lookHelp dir from ((Map fields) as map) result =
                     (tile :: result)
 
 
-{-| Describe what is at the players feet. Useful for deciding if there's an item worth picking up.
--}
 lookDown : Player -> Map -> Tile
 lookDown player ((Map fields) as map) =
     let
@@ -345,8 +318,6 @@ tileAtPosition cord (Map fields) =
             Empty
 
 
-{-| Ignore this function.
--}
 coordinateFrom : Direction -> Coordinate -> Coordinate
 coordinateFrom dir start =
     case dir of

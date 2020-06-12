@@ -25,12 +25,13 @@ import Palette.Cubehelix as Palette
 import Process
 import Task
 import Warrior.Direction as Direction
-import Warrior.History as History exposing (History)
+import Warrior.Internal.History as History exposing (History)
 import Warrior.Internal.Map as Map exposing (Map)
+import Warrior.Internal.Player as Player exposing (Player)
 import Warrior.Item as Item
 import Warrior.Map as TopMap
 import Warrior.Map.Builder as MapTemplate
-import Warrior.Player as Player exposing (Player)
+import Warrior.Player as TopPlayer exposing (Player)
 import Warrior.Tile as Tile
 
 
@@ -106,7 +107,7 @@ type alias OngoingModel =
 {-| The type signature of an AI turn function
 -}
 type alias PlayerTurnFunction =
-    Player -> Map -> History -> Player.Action
+    Player -> Map -> History -> TopPlayer.Action
 
 
 type alias PlayerDescription =
@@ -316,10 +317,10 @@ playerTurn playerDescription model =
             }
     in
     case playerAction of
-        Player.Wait ->
+        TopPlayer.Wait ->
             updatePlayer identity "waits"
 
-        Player.Move dir ->
+        TopPlayer.Move dir ->
             let
                 targetCoordinate =
                     Player.position playerDescription.state
@@ -341,7 +342,7 @@ playerTurn playerDescription model =
             else
                 updatePlayer identity "tries to move to an impossible position!"
 
-        Player.Pickup ->
+        TopPlayer.Pickup ->
             let
                 playerPos =
                     Player.position playerDescription.state
@@ -367,7 +368,7 @@ playerTurn playerDescription model =
                     updatePlayer identity <|
                         "tried to pick up an item, but there is no item to pick up."
 
-        Player.Heal ->
+        TopPlayer.Heal ->
             updatePlayer Player.heal <|
                 String.join " "
                     [ "takes a rest, improving their strength by"
@@ -375,7 +376,7 @@ playerTurn playerDescription model =
                     , "points."
                     ]
 
-        Player.Attack dir ->
+        TopPlayer.Attack dir ->
             let
                 attackCoordinate =
                     Map.coordinateFrom dir (Player.position playerDescription.state)
