@@ -1,6 +1,5 @@
 module Warrior.Internal.Player exposing
-    ( Action(..)
-    , Player
+    ( Player
     , addItem
     , alive
     , attack
@@ -19,7 +18,6 @@ module Warrior.Internal.Player exposing
 
 import List.Extra as List
 import Warrior.Coordinate exposing (Coordinate)
-import Warrior.Direction exposing (Direction)
 import Warrior.Item as Item exposing (Item)
 
 
@@ -41,14 +39,6 @@ type alias Internals =
     , maxHealth : Int
     , inventory : List Item
     }
-
-
-type Action
-    = Wait
-    | Move Direction
-    | Pickup
-    | Heal
-    | Attack Direction
 
 
 spawnHero : String -> Coordinate -> Player
