@@ -1,6 +1,6 @@
 module Warrior.Map.Tile exposing
     ( Tile(..)
-    , isWall, isEmpty, isSpawnPoint, isExit, isPlayer, isItem, canMoveOnto
+    , isWall, isEmpty, isSpawnPoint, isExit, isWarrior, isItem, canMoveOnto
     )
 
 {-| A map is built of several tiles. You can use this module to get a better idea of how the map is made up.
@@ -12,7 +12,7 @@ module Warrior.Map.Tile exposing
 
 Sometimes a pattern match is a bit much when all you want is the answer to a simple question. So here are simple predicate functions that make it easy to answer the most basic question about a tile.
 
-@docs isWall, isEmpty, isSpawnPoint, isExit, isPlayer, isItem, canMoveOnto
+@docs isWall, isEmpty, isSpawnPoint, isExit, isWarrior, isItem, canMoveOnto
 
 -}
 
@@ -26,7 +26,7 @@ type Tile
     | Empty
     | SpawnPoint
     | Exit
-    | Player String
+    | Warrior String
     | Item Item
 
 
@@ -78,12 +78,12 @@ isExit tile =
             False
 
 
-{-| True if the given Tile represents a player
+{-| True if the given Tile represents another warrior
 -}
-isPlayer : Tile -> Bool
-isPlayer tile =
+isWarrior : Tile -> Bool
+isWarrior tile =
     case tile of
-        Player _ ->
+        Warrior _ ->
             True
 
         _ ->

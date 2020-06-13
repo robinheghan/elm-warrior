@@ -210,7 +210,7 @@ tileColor tile =
         Empty ->
             Element.rgb255 255 255 255
 
-        Player _ ->
+        Warrior _ ->
             Element.rgb255 255 255 255
 
         Item _ ->
@@ -319,7 +319,7 @@ tileAtPosition cord (Map fields) =
     in
     case ( possiblePlayer, possibleItem ) of
         ( Just player, _ ) ->
-            Player (Player.id player)
+            Warrior (Player.id player)
 
         ( _, Just item ) ->
             Item item

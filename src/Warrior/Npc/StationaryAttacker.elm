@@ -22,7 +22,7 @@ takeTurn player map _ =
             Map.look direction player map
                 |> List.head
                 |> Maybe.map Tuple.second
-                |> Maybe.map Tile.isPlayer
+                |> Maybe.map Tile.isWarrior
                 |> Maybe.withDefault False
     in
     Direction.all
