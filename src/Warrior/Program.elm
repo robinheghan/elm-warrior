@@ -420,7 +420,7 @@ playerTurn playerDescription model =
                                 , dir
                                     |> Direction.toString
                                     |> String.toLower
-                                    |> String.append "."
+                                    |> (\s -> String.append s ".")
                                 , "Dealing"
                                 , Player.attackDamage playerDescription.state
                                     |> String.fromInt
