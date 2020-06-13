@@ -261,6 +261,7 @@ ongoingUpdate msg model =
                         players =
                             updatedModel.pcs
                                 |> List.map .state
+                                |> List.filter Player.isHero
                     in
                     ( Ongoing updatedModel
                     , case updatedModel.winCondition players updatedModel.currentMap updatedModel.mapHistory of

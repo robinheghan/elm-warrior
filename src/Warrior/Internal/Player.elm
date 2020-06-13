@@ -9,6 +9,8 @@ module Warrior.Internal.Player exposing
     , health
     , id
     , inventory
+    , isHero
+    , isVillain
     , maxHealth
     , position
     , spawnHero
@@ -25,14 +27,14 @@ type Player
     = Player Internals
 
 
-type PlayerRole
+type Role
     = Hero
     | Villain
 
 
 type alias Internals =
     { id : String
-    , playerRole : PlayerRole
+    , role : Role
     , spawnPosition : Coordinate
     , currentPosition : Coordinate
     , health : Int
@@ -45,7 +47,7 @@ spawnHero : String -> Coordinate -> Player
 spawnHero id_ cord =
     Player
         { id = id_
-        , playerRole = Hero
+        , role = Hero
         , spawnPosition = cord
         , currentPosition = cord
         , health = 10
@@ -58,7 +60,7 @@ spawnVillain : String -> Coordinate -> Player
 spawnVillain id_ cord =
     Player
         { id = id_
-        , playerRole = Villain
+        , role = Villain
         , spawnPosition = cord
         , currentPosition = cord
         , health = 10
@@ -137,3 +139,13 @@ healingPotential (Player fields) =
 alive : Player -> Bool
 alive (Player fields) =
     fields.health > 0
+
+
+isHero : Player -> Bool
+isHero (Player fields) =
+    fields.role == Hero
+
+
+isVillain : Player -> Bool
+isVillain (Player fields) =
+    fields.role == Villain
