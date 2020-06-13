@@ -1,6 +1,6 @@
 # Elm Warrior
 
-![Game in action](https://github.com/Skinney/elm-warrior-starter/blob/master/screen.png?raw=true)
+![Game in action](https://github.com/Skinney/elm-warrior/blob/master/screen.png?raw=true)
 
 This is a game where you hone your Elm skills by programming the AI of a brave warrior, named at, as it navigates mazes and battles dangerous opponents. 
 
