@@ -1,6 +1,7 @@
 module Warrior.Map.Progression exposing
     ( Progression(..), ProgressionFunction
-    , reachExitPoint, reachExitPointWithRoundLimit
+    , reachExitPoint, lastWarriorStanding
+    , withRoundLimit
     )
 
 {-| In this module you will find functions that define when a map has been won and lost. You can also define your own progression functions if you want to customize the game a bit.
@@ -10,7 +11,12 @@ module Warrior.Map.Progression exposing
 
 # Pre-made progression functions
 
-@docs reachExitPoint, reachExitPointWithRoundLimit
+@docs reachExitPoint, lastWarriorStanding
+
+
+# Additional limitations
+
+@docs withRoundLimit
 
 -}
 
@@ -61,17 +67,33 @@ reachExitPoint players map _ =
         Undecided
 
 
-{-| Like reachExitPoint, but also ends the game if a certain number of rounds have been played.
+{-| A progression function that ends the game when only one warrior remains. Perfect for deathmatches.
 -}
-reachExitPointWithRoundLimit : Int -> ProgressionFunction
-reachExitPointWithRoundLimit roundLimit players map history =
-    case reachExitPoint players map history of
-        Undecided ->
-            if History.roundsPlayed history >= roundLimit then
-                GameOver
+lastWarriorStanding : ProgressionFunction
+lastWarriorStanding players _ _ =
+    case players of
+        [ victor ] ->
+            Advance [ victor ]
 
-            else
-                Undecided
+        [] ->
+            GameOver
 
-        otherwise ->
-            otherwise
+        _ ->
+            Undecided
+
+
+{-| Takes in a progression function and ends the game if the original progression function is undecided, and a certain number of rounds has passed.
+-}
+withRoundLimit : Int -> ProgressionFunction -> ProgressionFunction
+withRoundLimit roundLimit progFunc =
+    \players map history ->
+        case progFunc players map history of
+            Undecided ->
+                if History.roundsPlayed history >= roundLimit then
+                    GameOver
+
+                else
+                    Undecided
+
+            otherwise ->
+                otherwise
