@@ -15,7 +15,7 @@
         "Warrior.Map.Tile",
         "Warrior.Maps",
         "Warrior.History",
-        "Warrior.Player",
+        "Warrior.Program",
         "Warrior.Npc.Dummy",
         "Warrior.Npc.StationaryAttacker"
     ],

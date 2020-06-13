@@ -6,13 +6,13 @@ module Warrior.Npc.Dummy exposing (takeTurn)
 
 -}
 
+import Warrior exposing (Action(..), Warrior)
 import Warrior.History exposing (History)
 import Warrior.Map exposing (Map)
-import Warrior.Player exposing (Action(..), Player)
 
 
 {-| Use this function with the `withNPC` function of the `Map` module to add dangerous opponents to a map.
 -}
-takeTurn : Player -> Map -> History -> Action
+takeTurn : Warrior -> Map -> History -> Action
 takeTurn _ _ _ =
     Wait

@@ -18,12 +18,12 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import List.Extra as List
+import Warrior exposing (Warrior)
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction as Direction exposing (Direction)
 import Warrior.Internal.Player as Player
 import Warrior.Item exposing (Item)
 import Warrior.Map.Tile exposing (Tile(..))
-import Warrior.Player exposing (Player)
 
 
 type Map
@@ -34,12 +34,12 @@ type alias Internals =
     { tilesPerRow : Int
     , tiles : Array Tile
     , items : List ( Coordinate, Item )
-    , npcs : List Player
+    , npcs : List Warrior
     , description : String
     }
 
 
-setNpcs : List Player -> Map -> Map
+setNpcs : List Warrior -> Map -> Map
 setNpcs newNpcs (Map fields) =
     Map { fields | npcs = newNpcs }
 
@@ -223,7 +223,7 @@ tileColor tile =
             Element.rgba255 0 255 0 0.4
 
 
-look : Direction -> Player -> Map -> List ( Coordinate, Tile )
+look : Direction -> Warrior -> Map -> List ( Coordinate, Tile )
 look dir player map =
     let
         coordinate =
@@ -273,7 +273,7 @@ lookHelp dir from ((Map fields) as map) result =
                     (( wantedCoordinate, tile ) :: result)
 
 
-lookDown : Player -> Map -> Tile
+lookDown : Warrior -> Map -> Tile
 lookDown player ((Map fields) as map) =
     let
         playerPosition =
@@ -297,7 +297,7 @@ lookDown player ((Map fields) as map) =
             tile
 
 
-currentPlayerPosition : Player -> Map -> Coordinate
+currentPlayerPosition : Warrior -> Map -> Coordinate
 currentPlayerPosition player (Map fields) =
     List.find (Player.id >> (==) (Player.id player)) fields.npcs
         |> Maybe.withDefault player
