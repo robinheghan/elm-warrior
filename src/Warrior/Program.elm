@@ -172,7 +172,7 @@ ongoingUpdate msg model =
 
                 Just firstLivingPlayer ->
                     ( Ongoing model
-                    , msgAfter 0 (TakeTurn (Player.id firstLivingPlayer.state))
+                    , msgAfter model.updateInterval (TakeTurn (Player.id firstLivingPlayer.state))
                     )
 
         TakeTurn playerId ->
@@ -180,7 +180,7 @@ ongoingUpdate msg model =
                 Nothing ->
                     -- Something wrong has happened, start from top of the turn order
                     ( Ongoing model
-                    , msgAfter model.updateInterval BeginRound
+                    , msgAfter 0 BeginRound
                     )
 
                 Just player ->
@@ -200,9 +200,8 @@ ongoingUpdate msg model =
                                 |> List.dropWhile (\pc -> Player.id pc.state /= playerId)
                                 |> List.drop 1
                                 |> List.find (.state >> Player.alive)
-                                |> Maybe.map (.state >> Player.id >> TakeTurn)
-                                |> Maybe.withDefault BeginRound
-                                |> msgAfter model.updateInterval
+                                |> Maybe.map (.state >> Player.id >> TakeTurn >> msgAfter model.updateInterval)
+                                |> Maybe.withDefault (msgAfter 0 BeginRound)
 
                         other ->
                             msgAfter model.updateInterval (InitializeMap other)
