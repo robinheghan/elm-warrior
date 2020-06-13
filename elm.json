@@ -1,9 +1,9 @@
 {
     "type": "package",
     "name": "Skinney/elm-warrior",
-    "summary": "Hone your Elm skills by programming the intelligence of a brave warrior, named at.",
+    "summary": "Hone your Elm skills by programming the intelligence of a brave warrior.",
     "license": "BSD-3-Clause",
-    "version": "4.0.1",
+    "version": "4.0.2",
     "exposed-modules": [
         "Warrior",
         "Warrior.Coordinate",
