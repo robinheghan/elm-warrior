@@ -17,8 +17,8 @@ module Warrior.Map exposing
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction exposing (Direction)
 import Warrior.Internal.Map as Internal exposing (Map)
+import Warrior.Map.Tile exposing (Tile)
 import Warrior.Player exposing (Player)
-import Warrior.Tile exposing (Tile)
 
 
 {-| A map, or level.

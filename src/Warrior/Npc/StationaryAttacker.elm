@@ -9,8 +9,8 @@ module Warrior.Npc.StationaryAttacker exposing (takeTurn)
 import Warrior.Direction as Direction
 import Warrior.History exposing (History)
 import Warrior.Map as Map exposing (Map)
+import Warrior.Map.Tile as Tile
 import Warrior.Player exposing (Action(..), Player)
-import Warrior.Tile as Tile
 
 
 {-| Use this function with the `withNPC` function of the `Map` module to add dangerous opponents to a map.

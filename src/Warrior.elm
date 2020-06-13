@@ -34,8 +34,8 @@ import Warrior.Internal.Player as Player exposing (Player)
 import Warrior.Item as Item
 import Warrior.Map.Builder as MapTemplate
 import Warrior.Map.Progression as Progression exposing (Progression, ProgressionFunction)
+import Warrior.Map.Tile as Tile
 import Warrior.Player as TopPlayer exposing (Player)
-import Warrior.Tile as Tile
 
 
 {-| How would you like the game to be played? Which maps would you like to see the player try on, and how many milliseconds should we wait before showing the next turn?

@@ -12,10 +12,10 @@
         "Warrior.Map",
         "Warrior.Map.Builder",
         "Warrior.Map.Progression",
+        "Warrior.Map.Tile",
         "Warrior.Maps",
         "Warrior.History",
         "Warrior.Player",
-        "Warrior.Tile",
         "Warrior.Npc.Dummy",
         "Warrior.Npc.StationaryAttacker"
     ],

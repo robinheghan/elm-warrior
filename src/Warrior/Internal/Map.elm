@@ -22,8 +22,8 @@ import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction as Direction exposing (Direction)
 import Warrior.Internal.Player as Player
 import Warrior.Item exposing (Item)
+import Warrior.Map.Tile exposing (Tile(..))
 import Warrior.Player exposing (Player)
-import Warrior.Tile exposing (Tile(..))
 
 
 type Map

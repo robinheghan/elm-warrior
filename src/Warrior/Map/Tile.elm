@@ -1,4 +1,4 @@
-module Warrior.Tile exposing
+module Warrior.Map.Tile exposing
     ( Tile(..)
     , isWall, isEmpty, isSpawnPoint, isExit, isPlayer, isItem, canMoveOnto
     )

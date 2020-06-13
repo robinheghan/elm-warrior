@@ -38,8 +38,8 @@ import Warrior.History exposing (History)
 import Warrior.Internal.Map as Map exposing (Map)
 import Warrior.Internal.Player as Player
 import Warrior.Item exposing (Item)
+import Warrior.Map.Tile as Tile exposing (Tile)
 import Warrior.Player as PublicPlayer exposing (Player)
-import Warrior.Tile as Tile exposing (Tile)
 
 
 {-| A map, or level.
