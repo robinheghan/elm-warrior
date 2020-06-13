@@ -1,14 +1,14 @@
 module Warrior.Program exposing
     ( Model, Msg
+    , TurnFunction
     , Config, program
     , MultiplayerConfig, multiplayerProgram
-    , TurnFunction
     )
 
 {-| Contains the essential logic for rendering and defining the game. The `Map` and `Player` modules will probably be more interesting.
 
 @docs Model, Msg
-@docs PlayerTurnFunction
+@docs TurnFunction
 @docs Config, program
 @docs MultiplayerConfig, multiplayerProgram
 
