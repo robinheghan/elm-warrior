@@ -2,6 +2,7 @@ module Warrior.History exposing
     ( History
     , previousActions
     , previousStates
+    , roundsPlayed
     )
 
 import Warrior.Internal.History as Internal exposing (History)
@@ -21,3 +22,8 @@ previousStates =
 previousActions : Player -> History -> List Player.Action
 previousActions =
     Internal.previousActions
+
+
+roundsPlayed : History -> Int
+roundsPlayed =
+    Internal.roundsPlayed

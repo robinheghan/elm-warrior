@@ -4,6 +4,7 @@ module Warrior.Internal.History exposing
     , previousActions
     , previousStates
     , record
+    , roundsPlayed
     )
 
 import Warrior.Map exposing (Map)
@@ -41,3 +42,24 @@ previousActions player (History history) =
 playerFilter : Player -> ( Player, Map, Player.Action ) -> Bool
 playerFilter player ( pastPlayer, _, _ ) =
     Player.id player == Player.id pastPlayer
+
+
+roundsPlayed : History -> Int
+roundsPlayed (History events) =
+    let
+        maybeFirstPlayer =
+            events
+                |> List.reverse
+                |> List.head
+                |> Maybe.map (\( player, _, _ ) -> player)
+    in
+    case maybeFirstPlayer of
+        Nothing ->
+            0
+
+        Just firstPlayer ->
+            events
+                |> List.filter (playerFilter firstPlayer)
+                |> List.length
+                |> (-) 1
+                |> max 0
