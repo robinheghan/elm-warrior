@@ -100,7 +100,7 @@ type alias OngoingModel =
     , currentMap : Map
     , remainingMaps : List MapTemplate.Builder
     , mapHistory : History
-    , actionLog : List ( PlayerDescription, String )
+    , actionLog : List ( String, String )
     , progressionFunction : ProgressionFunction
     , updateInterval : Float
     }
@@ -336,7 +336,7 @@ playerTurn playerDescription model =
                         updatedMap
                         playerAction
                         model.mapHistory
-                , actionLog = ( playerDescription, event ) :: model.actionLog
+                , actionLog = ( Player.id playerDescription.state, event ) :: model.actionLog
             }
     in
     case playerAction of
@@ -434,7 +434,7 @@ playerTurn playerDescription model =
                                 playerAction
                                 model.mapHistory
                         , actionLog =
-                            ( playerDescription
+                            ( Player.id playerDescription.state
                             , String.join " "
                                 [ "attacks"
                                 , dir
@@ -507,25 +507,11 @@ view model =
         )
 
 
-viewActionLog : ( PlayerDescription, String ) -> Element msg
-viewActionLog ( pd, event ) =
-    let
-        ( r, g, b ) =
-            Color.toRGB pd.color
-    in
-    Element.row
-        [ Element.spacing 10 ]
-        [ Element.el
-            [ Element.width <| Element.px 10
-            , Element.height <| Element.px 10
-            , Border.rounded 50
-            , Background.color <| Element.rgb255 (floor r) (floor g) (floor b)
-            ]
-            Element.none
-        , Element.paragraph
-            []
-            [ Element.text (Player.id pd.state)
-            , Element.text " "
-            , Element.text event
-            ]
+viewActionLog : ( String, String ) -> Element msg
+viewActionLog ( playerId, event ) =
+    Element.paragraph
+        []
+        [ Element.text playerId
+        , Element.text " "
+        , Element.text event
         ]
