@@ -452,24 +452,26 @@ view model =
                 Element.column
                     [ Element.centerX
                     , Element.centerY
+                    , Element.spacing 50
                     ]
                     [ Element.el
-                        [ Element.centerX
-                        , Element.paddingEach
-                            { top = 0
-                            , left = 0
-                            , right = 0
-                            , bottom = 50
-                            }
-                        ]
+                        [ Element.centerX ]
                         (Map.view playerPositions state.currentMap)
-                    , Element.column
-                        [ Element.width Element.fill
-                        , Element.height <| Element.px 100
-                        , Element.clip
-                        , Element.scrollbarY
+                    , Element.row
+                        []
+                        [ Element.column
+                            [ Element.width <| Element.px 200
+                            , Element.alignTop
+                            ]
+                            (List.map viewPlayerLegend state.warriors)
+                        , Element.column
+                            [ Element.alignTop
+                            , Element.width Element.fill
+                            , Element.height <| Element.px 200
+                            , Element.scrollbarY
+                            ]
+                            (List.map viewActionLog state.actionLog)
                         ]
-                        (List.map viewActionLog state.actionLog)
                     ]
 
             Done possibleWinners ->
@@ -493,6 +495,25 @@ view model =
                                 "Game Over"
                     )
         )
+
+
+viewPlayerLegend : PlayerDescription -> Element msg
+viewPlayerLegend pc =
+    let
+        ( r, g, b ) =
+            Color.toRGB pc.color
+    in
+    Element.row
+        [ Element.spacing 10 ]
+        [ Element.el
+            [ Border.rounded 50
+            , Background.color <| Element.rgb255 (floor r) (floor g) (floor b)
+            , Element.width (Element.px 10)
+            , Element.height (Element.px 10)
+            ]
+            Element.none
+        , Element.text (Player.id pc.state)
+        ]
 
 
 viewActionLog : ( String, String ) -> Element msg
