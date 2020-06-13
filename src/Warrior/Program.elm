@@ -94,7 +94,7 @@ type Model
 
 
 type alias OngoingModel =
-    { pcs : List PlayerDescription
+    { warriors : List PlayerDescription
     , currentMap : Map
     , remainingMaps : List Template
     , mapHistory : History
@@ -146,7 +146,7 @@ ongoingUpdate msg model =
                                 |> Set.fromList
 
                         advancingPlayers =
-                            model.pcs
+                            model.warriors
                                 |> List.filter (\pc -> Set.member (Player.id pc.state) advancingPlayerIds)
                                 |> List.map (\pc -> ( Player.id pc.state, pc.turnFunction ))
                     in
@@ -162,7 +162,7 @@ ongoingUpdate msg model =
         BeginRound ->
             let
                 possibleFirstLivingPlayer =
-                    List.find (\pc -> Player.isHero pc.state && Player.alive pc.state) model.pcs
+                    List.find (\pc -> Player.isHero pc.state && Player.alive pc.state) model.warriors
             in
             case possibleFirstLivingPlayer of
                 Nothing ->
@@ -176,7 +176,7 @@ ongoingUpdate msg model =
                     )
 
         TakeTurn playerId ->
-            case List.find (\pc -> Player.id pc.state == playerId) model.pcs of
+            case List.find (\pc -> Player.id pc.state == playerId) model.warriors of
                 Nothing ->
                     -- Something wrong has happened, start from top of the turn order
                     ( Ongoing model
@@ -189,14 +189,14 @@ ongoingUpdate msg model =
                             playerTurn player model
 
                         players =
-                            updatedModel.pcs
+                            updatedModel.warriors
                                 |> List.map .state
                                 |> List.filter Player.isHero
                     in
                     ( Ongoing updatedModel
                     , case updatedModel.progressionFunction players updatedModel.currentMap updatedModel.mapHistory of
                         Progression.Undecided ->
-                            model.pcs
+                            model.warriors
                                 |> List.dropWhile (\pc -> Player.id pc.state /= playerId)
                                 |> List.drop 1
                                 |> List.find (.state >> Player.alive)
@@ -273,7 +273,7 @@ modelWithMap currentMap remainingMaps players progressionFunction updateInterval
                     pcInDict == pc
     in
     Ongoing
-        { pcs = playersWithUniqueIds
+        { warriors = playersWithUniqueIds
         , currentMap = MapTemplate.build currentMap
         , remainingMaps = remainingMaps
         , mapHistory = History.init
@@ -293,14 +293,14 @@ playerTurn : PlayerDescription -> OngoingModel -> OngoingModel
 playerTurn playerDescription model =
     let
         updatedMap =
-            Map.setNpcs (List.map .state model.pcs) model.currentMap
+            Map.setNpcs (List.map .state model.warriors) model.currentMap
 
         playerAction =
             playerDescription.turnFunction playerDescription.state updatedMap model.mapHistory
 
         updatePlayer fn event =
             { model
-                | pcs =
+                | warriors =
                     List.map
                         (\desc ->
                             if desc == playerDescription then
@@ -309,7 +309,7 @@ playerTurn playerDescription model =
                             else
                                 desc
                         )
-                        model.pcs
+                        model.warriors
                 , mapHistory =
                     History.record
                         playerDescription.state
@@ -385,7 +385,7 @@ playerTurn playerDescription model =
                     Map.coordinateFrom dir (Player.position playerDescription.state)
 
                 possiblyAttackedPlayer =
-                    List.map .state model.pcs
+                    List.map .state model.warriors
                         |> List.filter Player.alive
                         |> List.filter (\pc -> Player.position pc == attackCoordinate)
                         |> List.head
@@ -397,7 +397,7 @@ playerTurn playerDescription model =
 
                 Just attackedPlayer ->
                     { model
-                        | pcs =
+                        | warriors =
                             List.map
                                 (\desc ->
                                     if desc.state == attackedPlayer then
@@ -406,7 +406,7 @@ playerTurn playerDescription model =
                                     else
                                         desc
                                 )
-                                model.pcs
+                                model.warriors
                         , mapHistory =
                             History.record
                                 playerDescription.state
@@ -445,7 +445,7 @@ view model =
             Ongoing state ->
                 let
                     playerPositions =
-                        state.pcs
+                        state.warriors
                             |> List.filter (.state >> Player.alive)
                             |> List.map (\pd -> ( Player.position pd.state, pd.color ))
                 in
