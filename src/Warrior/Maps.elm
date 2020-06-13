@@ -161,7 +161,7 @@ straightGuard =
         |> Map.withDescription "Hmm... Another character. Too bad she's in our way. Attack!"
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
-        |> Map.withNPC "Dummy" { x = 3, y = 0 } Dummy.takeTurn
+        |> Map.withNpc "Dummy" { x = 3, y = 0 } Dummy.takeTurn
         |> Map.build
 
 
@@ -172,7 +172,7 @@ straightPowerfulGuard =
         |> Map.withDescription "Be careful, this one might hit back. Be ready to heal if your health becomes low."
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
-        |> Map.withNPC "Guard" { x = 3, y = 0 } StationaryAttacker.takeTurn
+        |> Map.withNpc "Guard" { x = 3, y = 0 } StationaryAttacker.takeTurn
         |> Map.armLastNpc Item.Sword
         |> Map.build
 
@@ -184,7 +184,7 @@ straightGuardPickupSword =
         |> Map.withDescription "See that yellow tile? It's an item. Let's pick it up, it might improve our attacks."
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
-        |> Map.withNPC "Guard" { x = 4, y = 0 } StationaryAttacker.takeTurn
+        |> Map.withNpc "Guard" { x = 4, y = 0 } StationaryAttacker.takeTurn
         |> Map.withItem { x = 2, y = 0 } Item.Sword
         |> Map.build
 
@@ -196,7 +196,7 @@ straightGuardPickupPotion =
         |> Map.withDescription "Another item? Looks potion'y like. Wonder what it will do..."
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
-        |> Map.withNPC "Guard" { x = 4, y = 0 } StationaryAttacker.takeTurn
+        |> Map.withNpc "Guard" { x = 4, y = 0 } StationaryAttacker.takeTurn
         |> Map.armLastNpc Item.Sword
         |> Map.withItem { x = 2, y = 0 } Item.Potion
         |> Map.build
@@ -213,9 +213,9 @@ dungeon =
         |> Map.withWalledArea { x = 4, y = 0 } { x = 6, y = 1 }
         |> Map.withWalledArea { x = 0, y = 5 } { x = 5, y = 5 }
         |> Map.withWalledArea { x = 6, y = 3 } { x = 1, y = 3 }
-        |> Map.withNPC "Guard 1" { x = 6, y = 5 } StationaryAttacker.takeTurn
-        |> Map.withNPC "Guard 2" { x = 0, y = 3 } StationaryAttacker.takeTurn
-        |> Map.withNPC "Boss" { x = 3, y = 1 } StationaryAttacker.takeTurn
+        |> Map.withNpc "Guard 1" { x = 6, y = 5 } StationaryAttacker.takeTurn
+        |> Map.withNpc "Guard 2" { x = 0, y = 3 } StationaryAttacker.takeTurn
+        |> Map.withNpc "Boss" { x = 3, y = 1 } StationaryAttacker.takeTurn
         |> Map.armLastNpc Item.Sword
         |> Map.withItem { x = 6, y = 4 } Item.Sword
         |> Map.withItem { x = 0, y = 2 } Item.Potion

@@ -1,4 +1,36 @@
-module Warrior.Map.Builder exposing (..)
+module Warrior.Map.Builder exposing
+    ( Builder
+    , Size, init, withDescription, withSpawnPoint, withExitPoint, withWalledArea
+    , withNpc, armLastNpc, withItem
+    , spawnPoints, npcs
+    , build
+    )
+
+{-| You can use this module to build your own maps!
+
+@docs Builder
+
+
+# Map layout
+
+@docs Size, init, withDescription, withSpawnPoint, withExitPoint, withWalledArea
+
+
+# Non-playable characters (Npc's) and Items
+
+@docs withNpc, armLastNpc, withItem
+
+
+# Queries
+
+@docs spawnPoints, npcs
+
+
+# Finally
+
+@docs build
+
+-}
 
 import Array exposing (Array)
 import Warrior.Coordinate exposing (Coordinate)
@@ -27,7 +59,7 @@ type alias Internals =
 
 {-| Describes how large a map should be in rows and columns. Use this when creating your own maps.
 -}
-type alias Config =
+type alias Size =
     { rows : Int
     , columns : Int
     }
@@ -35,7 +67,7 @@ type alias Config =
 
 {-| Initialize an empty map of a given size where every tile is empty. Use the the following `with` functions to make the map more interesting.
 -}
-init : Config -> Builder
+init : Size -> Builder
 init config =
     Builder
         { description = ""
@@ -112,8 +144,8 @@ withWalledArea cord1 cord2 ((Builder fields) as map) =
 
 {-| Places a villain on the specific coordinate of the map, using the supplied function to know what to do each turn. You can find pre-made turn functions in the `Warrior.Npc` module.
 -}
-withNPC : String -> Coordinate -> (Player -> Map -> History -> PublicPlayer.Action) -> Builder -> Builder
-withNPC id cord turnFunc (Builder fields) =
+withNpc : String -> Coordinate -> (Player -> Map -> History -> PublicPlayer.Action) -> Builder -> Builder
+withNpc id cord turnFunc (Builder fields) =
     Builder { fields | npcs = ( Player.spawnVillain id cord, turnFunc ) :: fields.npcs }
 
 
@@ -150,11 +182,15 @@ spawnPoints (Builder fields) =
         |> Array.toList
 
 
+{-| Return a list of all non-playable characters as well as those characters turn functions.
+-}
 npcs : Builder -> List ( Player, Player -> Map -> History -> PublicPlayer.Action )
 npcs (Builder fields) =
     fields.npcs
 
 
+{-| Turn this builder into a proper map
+-}
 build : Builder -> Map
 build (Builder fields) =
     Map.Map

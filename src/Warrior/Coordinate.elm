@@ -7,6 +7,8 @@ module Warrior.Coordinate exposing
 
 @docs Coordinate
 
+@docs toString
+
 -}
 
 
@@ -18,6 +20,8 @@ type alias Coordinate =
     }
 
 
+{-| A human readable string of the given coordinate.
+-}
 toString : Coordinate -> String
 toString cord =
     String.join ""

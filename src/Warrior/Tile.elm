@@ -1,4 +1,20 @@
-module Warrior.Tile exposing (..)
+module Warrior.Tile exposing
+    ( Tile(..)
+    , isWall, isEmpty, isSpawnPoint, isExit, isPlayer, isItem, canMoveOnto
+    )
+
+{-| A map is built of several tiles. You can use this module to get a better idea of how the map is made up.
+
+@docs Tile
+
+
+# Predicates
+
+Sometimes a pattern match is a bit much when all you want is the answer to a simple question. So here are simple predicate functions that make it easy to answer the most basic question about a tile.
+
+@docs isWall, isEmpty, isSpawnPoint, isExit, isPlayer, isItem, canMoveOnto
+
+-}
 
 import Warrior.Item exposing (Item)
 
@@ -14,6 +30,8 @@ type Tile
     | Item Item
 
 
+{-| True if the given Tile is a Wall
+-}
 isWall : Tile -> Bool
 isWall tile =
     case tile of
@@ -24,6 +42,8 @@ isWall tile =
             False
 
 
+{-| True if the given Tile represents Empty space
+-}
 isEmpty : Tile -> Bool
 isEmpty tile =
     case tile of
@@ -34,6 +54,8 @@ isEmpty tile =
             False
 
 
+{-| True if the given Tile is a spawn point
+-}
 isSpawnPoint : Tile -> Bool
 isSpawnPoint tile =
     case tile of
@@ -44,6 +66,8 @@ isSpawnPoint tile =
             False
 
 
+{-| True if the given Tile is an exit point
+-}
 isExit : Tile -> Bool
 isExit tile =
     case tile of
@@ -54,6 +78,8 @@ isExit tile =
             False
 
 
+{-| True if the given Tile represents a player
+-}
 isPlayer : Tile -> Bool
 isPlayer tile =
     case tile of
@@ -64,6 +90,8 @@ isPlayer tile =
             False
 
 
+{-| True if the given Tile represents an item
+-}
 isItem : Tile -> Bool
 isItem tile =
     case tile of
@@ -74,6 +102,8 @@ isItem tile =
             False
 
 
+{-| True if a warrior can move to this tile with a move action.
+-}
 canMoveOnto : Tile -> Bool
 canMoveOnto tile =
     case tile of
