@@ -31,7 +31,7 @@ import Warrior.Internal.History as History exposing (History)
 import Warrior.Internal.Map as Map exposing (Map)
 import Warrior.Internal.Warrior as Player
 import Warrior.Item as Item
-import Warrior.Map.Builder as MapTemplate
+import Warrior.Map.Builder as MapTemplate exposing (Template)
 import Warrior.Map.Progression as Progression exposing (Progression, ProgressionFunction)
 import Warrior.Map.Tile as Tile
 
@@ -42,17 +42,21 @@ type alias TurnFunction =
     Warrior -> Map -> History -> Warrior.Action
 
 
-{-| Use this config to play with multiple warriors, and with a custom win condition.
+{-| This configuration decides what kind of game you'll play.
+You can find a bunch of pre-made maps in the `Warrior.Maps` module, unless you want to make your own.
+For players you can add a list of ( PlayerName, TurnFunction ).
+You can decide how long to wait between turns using the msPerTurn field.
+Finally, the progressionFunction decides when the game is over, or when it is won. You can find some progressionFunctions in `Warrior.Maps.Progression`.
 -}
 type alias Config =
-    { maps : List MapTemplate.Builder
+    { maps : List Template
     , players : List ( String, TurnFunction )
     , msPerTurn : Float
     , progressionFunction : ProgressionFunction
     }
 
 
-{-| Start a program based of the multiplayer config
+{-| Start a program with a given config.
 -}
 program : Config -> Program () Model Msg
 program config =
@@ -92,7 +96,7 @@ type Model
 type alias OngoingModel =
     { pcs : List PlayerDescription
     , currentMap : Map
-    , remainingMaps : List MapTemplate.Builder
+    , remainingMaps : List Template
     , mapHistory : History
     , actionLog : List ( String, String )
     , progressionFunction : ProgressionFunction
@@ -206,8 +210,8 @@ ongoingUpdate msg model =
 
 
 modelWithMap :
-    MapTemplate.Builder
-    -> List MapTemplate.Builder
+    Template
+    -> List Template
     -> List ( String, TurnFunction )
     -> ProgressionFunction
     -> Float

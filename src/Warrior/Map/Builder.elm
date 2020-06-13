@@ -1,5 +1,5 @@
 module Warrior.Map.Builder exposing
-    ( Builder
+    ( Template
     , Size, init, withDescription, withSpawnPoint, withExitPoint, withWalledArea
     , withNpc, armLastNpc, withItem
     , spawnPoints, npcs
@@ -8,7 +8,7 @@ module Warrior.Map.Builder exposing
 
 {-| You can use this module to build your own maps!
 
-@docs Builder
+@docs Template
 
 
 # Map layout
@@ -44,8 +44,8 @@ import Warrior.Map.Tile as Tile exposing (Tile)
 
 {-| A map in progress.
 -}
-type Builder
-    = Builder Internals
+type Template
+    = Template Internals
 
 
 type alias Internals =
@@ -67,9 +67,9 @@ type alias Size =
 
 {-| Initialize an empty map of a given size where every tile is empty. Use the the following `with` functions to make the map more interesting.
 -}
-init : Size -> Builder
+init : Size -> Template
 init config =
-    Builder
+    Template
         { description = ""
         , tilesPerRow = config.columns
         , tiles = Array.initialize (config.columns * config.rows) (always Tile.Empty)
@@ -80,14 +80,14 @@ init config =
 
 {-| Sets a description for the map which will be displayed above the map when the game is played.
 -}
-withDescription : String -> Builder -> Builder
-withDescription description (Builder fields) =
-    Builder { fields | description = description }
+withDescription : String -> Template -> Template
+withDescription description (Template fields) =
+    Template { fields | description = description }
 
 
 {-| Marks a coordinate on the map where a playable warrior will spawn.
 -}
-withSpawnPoint : Coordinate -> Builder -> Builder
+withSpawnPoint : Coordinate -> Template -> Template
 withSpawnPoint cord map =
     if coordinatesInBound cord map then
         updateTiles (Array.set (translateCoordinates cord map) Tile.SpawnPoint) map
@@ -98,7 +98,7 @@ withSpawnPoint cord map =
 
 {-| Marks a coordinate on the map where the player needs to go to advance to the next map.
 -}
-withExitPoint : Coordinate -> Builder -> Builder
+withExitPoint : Coordinate -> Template -> Template
 withExitPoint cord map =
     if coordinatesInBound cord map then
         updateTiles (Array.set (translateCoordinates cord map) Tile.Exit) map
@@ -109,8 +109,8 @@ withExitPoint cord map =
 
 {-| Turns every tile between two coordinates into wall tiles.
 -}
-withWalledArea : Coordinate -> Coordinate -> Builder -> Builder
-withWalledArea cord1 cord2 ((Builder fields) as map) =
+withWalledArea : Coordinate -> Coordinate -> Template -> Template
+withWalledArea cord1 cord2 ((Template fields) as map) =
     let
         origin =
             { x = min cord1.x cord2.x
@@ -139,43 +139,43 @@ withWalledArea cord1 cord2 ((Builder fields) as map) =
             List.range 0 tilesToFill
                 |> List.map (\offset -> { cord | x = origin.x + offset })
     in
-    Builder { fields | tiles = updatedTiles }
+    Template { fields | tiles = updatedTiles }
 
 
 {-| Places a villain on the specific coordinate of the map, using the supplied function to know what to do each turn. You can find pre-made turn functions in the `Warrior.Npc` module.
 -}
-withNpc : String -> Coordinate -> (Warrior -> Map -> History -> Warrior.Action) -> Builder -> Builder
-withNpc id cord turnFunc (Builder fields) =
-    Builder { fields | npcs = ( Player.spawnVillain id cord, turnFunc ) :: fields.npcs }
+withNpc : String -> Coordinate -> (Warrior -> Map -> History -> Warrior.Action) -> Template -> Template
+withNpc id cord turnFunc (Template fields) =
+    Template { fields | npcs = ( Player.spawnVillain id cord, turnFunc ) :: fields.npcs }
 
 
 {-| Places an item into the inventory of the last villain added with the `withNpc` function.
 -}
-armLastNpc : Item -> Builder -> Builder
-armLastNpc item ((Builder fields) as builder) =
+armLastNpc : Item -> Template -> Template
+armLastNpc item ((Template fields) as builder) =
     case fields.npcs of
         [] ->
             builder
 
         ( lastNpcState, lastNpcBrain ) :: rest ->
-            Builder { fields | npcs = ( Player.addItem item lastNpcState, lastNpcBrain ) :: rest }
+            Template { fields | npcs = ( Player.addItem item lastNpcState, lastNpcBrain ) :: rest }
 
 
 {-| Places an item on the map which can be picked up by warriors.
 -}
-withItem : Coordinate -> Item -> Builder -> Builder
-withItem coordinate item (Builder fields) =
+withItem : Coordinate -> Item -> Template -> Template
+withItem coordinate item (Template fields) =
     let
         cleansedItems =
             List.filter (\( itemCord, _ ) -> itemCord /= coordinate) fields.items
     in
-    Builder { fields | items = ( coordinate, item ) :: cleansedItems }
+    Template { fields | items = ( coordinate, item ) :: cleansedItems }
 
 
 {-| A list of points where warriors can spawn.
 -}
-spawnPoints : Builder -> List Coordinate
-spawnPoints (Builder fields) =
+spawnPoints : Template -> List Coordinate
+spawnPoints (Template fields) =
     Array.indexedMap Tuple.pair fields.tiles
         |> Array.filter (\( _, tile ) -> tile == Tile.SpawnPoint)
         |> Array.map (Tuple.first >> indexToCoordinate fields)
@@ -184,15 +184,15 @@ spawnPoints (Builder fields) =
 
 {-| Return a list of all non-playable characters along with their turn functions.
 -}
-npcs : Builder -> List ( Warrior, Warrior -> Map -> History -> Warrior.Action )
-npcs (Builder fields) =
+npcs : Template -> List ( Warrior, Warrior -> Map -> History -> Warrior.Action )
+npcs (Template fields) =
     fields.npcs
 
 
-{-| Turn this builder into a proper map
+{-| Turn this template into a map
 -}
-build : Builder -> Map
-build (Builder fields) =
+build : Template -> Map
+build (Template fields) =
     Map.Map
         { description = fields.description
         , tilesPerRow = fields.tilesPerRow
@@ -206,8 +206,8 @@ build (Builder fields) =
 -- HELPERS
 
 
-coordinatesInBound : Coordinate -> Builder -> Bool
-coordinatesInBound cord (Builder fields) =
+coordinatesInBound : Coordinate -> Template -> Bool
+coordinatesInBound cord (Template fields) =
     let
         totalRows =
             Array.length fields.tiles // fields.tilesPerRow
@@ -218,8 +218,8 @@ coordinatesInBound cord (Builder fields) =
         && (cord.x < fields.tilesPerRow)
 
 
-translateCoordinates : Coordinate -> Builder -> Int
-translateCoordinates cord (Builder fields) =
+translateCoordinates : Coordinate -> Template -> Int
+translateCoordinates cord (Template fields) =
     let
         colBase =
             cord.y * fields.tilesPerRow
@@ -234,6 +234,6 @@ indexToCoordinate fields index =
     }
 
 
-updateTiles : (Array Tile -> Array Tile) -> Builder -> Builder
-updateTiles fn (Builder fields) =
-    Builder { fields | tiles = fn fields.tiles }
+updateTiles : (Array Tile -> Array Tile) -> Template -> Template
+updateTiles fn (Template fields) =
+    Template { fields | tiles = fn fields.tiles }

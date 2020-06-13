@@ -21,15 +21,14 @@ module Warrior.Maps exposing
 -}
 
 import Warrior.Item as Item
-import Warrior.Map exposing (Map)
-import Warrior.Map.Builder as Map
+import Warrior.Map.Builder as Map exposing (Template)
 import Warrior.Npc.Dummy as Dummy
 import Warrior.Npc.StationaryAttacker as StationaryAttacker
 
 
 {-| A list of all pre-made maps.
 -}
-all : List Map
+all : List Template
 all =
     List.concat
         [ movement
@@ -39,7 +38,7 @@ all =
 
 {-| A list of map that only require navigation.
 -}
-movement : List Map
+movement : List Template
 movement =
     [ straight
     , inverseL
@@ -53,7 +52,7 @@ movement =
 
 {-| A list of maps which require fighting in addition to navigation.
 -}
-fighting : List Map
+fighting : List Template
 fighting =
     [ straightGuard
     , straightPowerfulGuard
@@ -68,27 +67,25 @@ fighting =
 
 
 {-| -}
-straight : Map
+straight : Template
 straight =
     Map.init { rows = 1, columns = 5 }
         |> Map.withDescription "The goal for these first couple of maps is simply to reach that green area, also known as the exit point. Let's see if we can reach it."
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 4, y = 0 }
-        |> Map.build
 
 
 {-| -}
-inverseL : Map
+inverseL : Template
 inverseL =
     Map.init { rows = 5, columns = 5 }
         |> Map.withWalledArea { x = 0, y = 1 } { x = 3, y = 4 }
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 4, y = 4 }
-        |> Map.build
 
 
 {-| -}
-loop : Map
+loop : Template
 loop =
     Map.init { rows = 7, columns = 7 }
         |> Map.withSpawnPoint { x = 0, y = 0 }
@@ -97,11 +94,10 @@ loop =
         |> Map.withWalledArea { x = 5, y = 1 } { x = 5, y = 5 }
         |> Map.withWalledArea { x = 5, y = 5 } { x = 1, y = 5 }
         |> Map.withWalledArea { x = 1, y = 5 } { x = 1, y = 3 }
-        |> Map.build
 
 
 {-| -}
-withDeadEndLeft : Map
+withDeadEndLeft : Template
 withDeadEndLeft =
     Map.init { rows = 7, columns = 7 }
         |> Map.withSpawnPoint { x = 3, y = 0 }
@@ -113,11 +109,10 @@ withDeadEndLeft =
         |> Map.withWalledArea { x = 4, y = 1 } { x = 5, y = 2 }
         |> Map.withWalledArea { x = 4, y = 4 } { x = 6, y = 6 }
         |> Map.withWalledArea { x = 0, y = 6 } { x = 0, y = 6 }
-        |> Map.build
 
 
 {-| -}
-withDeadEndRight : Map
+withDeadEndRight : Template
 withDeadEndRight =
     Map.init { rows = 7, columns = 7 }
         |> Map.withSpawnPoint { x = 3, y = 0 }
@@ -129,25 +124,22 @@ withDeadEndRight =
         |> Map.withWalledArea { x = 4, y = 1 } { x = 5, y = 2 }
         |> Map.withWalledArea { x = 4, y = 4 } { x = 6, y = 6 }
         |> Map.withWalledArea { x = 0, y = 6 } { x = 0, y = 6 }
-        |> Map.build
 
 
 {-| -}
-openSpace : Map
+openSpace : Template
 openSpace =
     Map.init { rows = 7, columns = 7 }
         |> Map.withSpawnPoint { x = 1, y = 1 }
         |> Map.withExitPoint { x = 5, y = 5 }
-        |> Map.build
 
 
 {-| -}
-openSpaceReverse : Map
+openSpaceReverse : Template
 openSpaceReverse =
     Map.init { rows = 7, columns = 7 }
         |> Map.withSpawnPoint { x = 5, y = 5 }
         |> Map.withExitPoint { x = 1, y = 1 }
-        |> Map.build
 
 
 
@@ -155,18 +147,17 @@ openSpaceReverse =
 
 
 {-| -}
-straightGuard : Map
+straightGuard : Template
 straightGuard =
     Map.init { rows = 1, columns = 7 }
         |> Map.withDescription "Hmm... Another character. Too bad she's in our way. Attack!"
         |> Map.withSpawnPoint { x = 0, y = 0 }
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNpc "Dummy" { x = 3, y = 0 } Dummy.takeTurn
-        |> Map.build
 
 
 {-| -}
-straightPowerfulGuard : Map
+straightPowerfulGuard : Template
 straightPowerfulGuard =
     Map.init { rows = 1, columns = 7 }
         |> Map.withDescription "Be careful, this one might hit back. Be ready to heal if your health becomes low."
@@ -174,11 +165,10 @@ straightPowerfulGuard =
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNpc "Guard" { x = 3, y = 0 } StationaryAttacker.takeTurn
         |> Map.armLastNpc Item.Sword
-        |> Map.build
 
 
 {-| -}
-straightGuardPickupSword : Map
+straightGuardPickupSword : Template
 straightGuardPickupSword =
     Map.init { rows = 1, columns = 7 }
         |> Map.withDescription "See that yellow tile? It's an item. Let's pick it up, it might improve our attacks."
@@ -186,11 +176,10 @@ straightGuardPickupSword =
         |> Map.withExitPoint { x = 6, y = 0 }
         |> Map.withNpc "Guard" { x = 4, y = 0 } StationaryAttacker.takeTurn
         |> Map.withItem { x = 2, y = 0 } Item.Sword
-        |> Map.build
 
 
 {-| -}
-straightGuardPickupPotion : Map
+straightGuardPickupPotion : Template
 straightGuardPickupPotion =
     Map.init { rows = 1, columns = 7 }
         |> Map.withDescription "Another item? Looks potion'y like. Wonder what it will do..."
@@ -199,11 +188,10 @@ straightGuardPickupPotion =
         |> Map.withNpc "Guard" { x = 4, y = 0 } StationaryAttacker.takeTurn
         |> Map.armLastNpc Item.Sword
         |> Map.withItem { x = 2, y = 0 } Item.Potion
-        |> Map.build
 
 
 {-| -}
-dungeon : Map
+dungeon : Template
 dungeon =
     Map.init { rows = 7, columns = 7 }
         |> Map.withDescription "This is the true test. Make it out alive."
@@ -219,4 +207,3 @@ dungeon =
         |> Map.armLastNpc Item.Sword
         |> Map.withItem { x = 6, y = 4 } Item.Sword
         |> Map.withItem { x = 0, y = 2 } Item.Potion
-        |> Map.build
