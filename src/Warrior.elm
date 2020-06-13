@@ -56,7 +56,7 @@ program config =
                     { maps = config.maps
                     , players = [ ( "Player", config.player ) ]
                     , msPerTurn = config.msPerTurn
-                    , winCondition = Progression.reachExitPoint
+                    , progressionFunction = Progression.reachExitPoint
                     }
         , update = update
         , view = view
@@ -70,7 +70,7 @@ type alias MultiplayerConfig =
     { maps : List MapTemplate.Builder
     , players : List ( String, PlayerTurnFunction )
     , msPerTurn : Float
-    , winCondition : ProgressionFunction
+    , progressionFunction : ProgressionFunction
     }
 
 
@@ -100,7 +100,7 @@ type alias OngoingModel =
     , remainingMaps : List MapTemplate.Builder
     , mapHistory : History
     , actionLog : List ( PlayerDescription, String )
-    , winCondition : ProgressionFunction
+    , progressionFunction : ProgressionFunction
     , updateInterval : Float
     }
 
@@ -127,7 +127,7 @@ init config =
             )
 
         first :: rest ->
-            ( modelWithMap first rest config.players config.winCondition config.msPerTurn
+            ( modelWithMap first rest config.players config.progressionFunction config.msPerTurn
             , msgAfter 0 BeginRound
             )
 
@@ -139,7 +139,7 @@ modelWithMap :
     -> ProgressionFunction
     -> Float
     -> Model
-modelWithMap currentMap remainingMaps players winCondition updateInterval =
+modelWithMap currentMap remainingMaps players progressionFunction updateInterval =
     let
         pcs =
             MapTemplate.spawnPoints currentMap
@@ -189,7 +189,7 @@ modelWithMap currentMap remainingMaps players winCondition updateInterval =
         , remainingMaps = remainingMaps
         , mapHistory = History.init
         , actionLog = []
-        , winCondition = winCondition
+        , progressionFunction = progressionFunction
         , updateInterval = updateInterval
         }
 
@@ -223,7 +223,7 @@ ongoingUpdate msg model =
                     )
 
                 next :: rest ->
-                    ( modelWithMap next rest model.initialPlayers model.winCondition model.updateInterval
+                    ( modelWithMap next rest model.initialPlayers model.progressionFunction model.updateInterval
                     , msgAfter 0 BeginRound
                     )
 
@@ -264,7 +264,7 @@ ongoingUpdate msg model =
                                 |> List.filter Player.isHero
                     in
                     ( Ongoing updatedModel
-                    , case updatedModel.winCondition players updatedModel.currentMap updatedModel.mapHistory of
+                    , case updatedModel.progressionFunction players updatedModel.currentMap updatedModel.mapHistory of
                         Progression.Advance playersToAdvance ->
                             let
                                 possibleSurvivingPlayer =
