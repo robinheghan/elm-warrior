@@ -31,6 +31,7 @@ import Warrior.Internal.Player as Player exposing (Player)
 import Warrior.Item as Item
 import Warrior.Map as TopMap
 import Warrior.Map.Builder as MapTemplate
+import Warrior.Map.Progression as Progression exposing (ProgressionFunction)
 import Warrior.Player as TopPlayer exposing (Player)
 import Warrior.Tile as Tile
 
@@ -55,7 +56,7 @@ program config =
                     { maps = config.maps
                     , players = [ ( "Player", config.player ) ]
                     , msPerTurn = config.msPerTurn
-                    , winCondition = doneWithCurrentMap
+                    , winCondition = Progression.reachExitPoint
                     }
         , update = update
         , view = view
@@ -69,7 +70,7 @@ type alias MultiplayerConfig =
     { maps : List MapTemplate.Builder
     , players : List ( String, PlayerTurnFunction )
     , msPerTurn : Float
-    , winCondition : GameProgressionFunction
+    , winCondition : ProgressionFunction
     }
 
 
@@ -99,7 +100,7 @@ type alias OngoingModel =
     , remainingMaps : List MapTemplate.Builder
     , mapHistory : History
     , actionLog : List ( PlayerDescription, String )
-    , winCondition : GameProgressionFunction
+    , winCondition : ProgressionFunction
     , updateInterval : Float
     }
 
@@ -108,16 +109,6 @@ type alias OngoingModel =
 -}
 type alias PlayerTurnFunction =
     Player -> Map -> History -> TopPlayer.Action
-
-
-type alias GameProgressionFunction =
-    List Player -> Map -> History -> GameProgression
-
-
-type GameProgression
-    = Advance (List Player)
-    | GameOver
-    | Undecided
 
 
 type alias PlayerDescription =
@@ -145,7 +136,7 @@ modelWithMap :
     MapTemplate.Builder
     -> List MapTemplate.Builder
     -> List ( String, PlayerTurnFunction )
-    -> GameProgressionFunction
+    -> ProgressionFunction
     -> Float
     -> Model
 modelWithMap currentMap remainingMaps players winCondition updateInterval =
@@ -273,7 +264,7 @@ ongoingUpdate msg model =
                     in
                     ( Ongoing updatedModel
                     , case updatedModel.winCondition players updatedModel.currentMap updatedModel.mapHistory of
-                        Advance playersToAdvance ->
+                        Progression.Advance playersToAdvance ->
                             let
                                 possibleSurvivingPlayer =
                                     playersToAdvance
@@ -282,10 +273,10 @@ ongoingUpdate msg model =
                             in
                             msgAfter model.updateInterval (InitializeMap possibleSurvivingPlayer)
 
-                        GameOver ->
+                        Progression.GameOver ->
                             msgAfter model.updateInterval (InitializeMap Nothing)
 
-                        Undecided ->
+                        Progression.Undecided ->
                             model.pcs
                                 |> List.dropWhile (\pc -> Player.id pc.state /= playerId)
                                 |> List.drop 1
@@ -442,27 +433,6 @@ playerTurn playerDescription model =
                             )
                                 :: model.actionLog
                     }
-
-
-doneWithCurrentMap : List Player -> Map -> History -> GameProgression
-doneWithCurrentMap players currentMap history =
-    let
-        anyoneReachedExit =
-            List.any (\p -> TopMap.isExit (Player.position p) currentMap) players
-
-        allDead =
-            players
-                |> List.filter Player.alive
-                |> List.isEmpty
-    in
-    if anyoneReachedExit then
-        Advance players
-
-    else if allDead then
-        GameOver
-
-    else
-        Undecided
 
 
 view : Model -> Html msg

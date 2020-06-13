@@ -49,8 +49,7 @@ removeItem cord (Map fields) =
     let
         maybeItem =
             fields.items
-                |> List.filter (\( itemCord, _ ) -> itemCord == cord)
-                |> List.head
+                |> List.find (\( itemCord, _ ) -> itemCord == cord)
                 |> Maybe.map Tuple.second
     in
     case maybeItem of
