@@ -1,16 +1,14 @@
 module Warrior.Program exposing
-    ( Model, Msg
-    , TurnFunction
+    ( TurnFunction
+    , Model, Msg
     , Config, program
-    , MultiplayerConfig, multiplayerProgram
     )
 
-{-| Contains the essential logic for rendering and defining the game. The `Map` and `Player` modules will probably be more interesting.
+{-| Contains the essential logic for rendering and defining the game. The `Map` and `Player` modules will be of more interest for programming your warrior.
 
-@docs Model, Msg
 @docs TurnFunction
+@docs Model, Msg
 @docs Config, program
-@docs MultiplayerConfig, multiplayerProgram
 
 -}
 
@@ -31,44 +29,22 @@ import Warrior exposing (Warrior)
 import Warrior.Direction as Direction
 import Warrior.Internal.History as History exposing (History)
 import Warrior.Internal.Map as Map exposing (Map)
-import Warrior.Internal.Player as Player
+import Warrior.Internal.Warrior as Player
 import Warrior.Item as Item
 import Warrior.Map.Builder as MapTemplate
 import Warrior.Map.Progression as Progression exposing (Progression, ProgressionFunction)
 import Warrior.Map.Tile as Tile
 
 
-{-| How would you like the game to be played? Which maps would you like to see the player try on, and how many milliseconds should we wait before showing the next turn?
+{-| The type signature of a turn function. Turn functions with decide the actions of a Warrior.
 -}
-type alias Config =
-    { maps : List MapTemplate.Builder
-    , player : TurnFunction
-    , msPerTurn : Float
-    }
-
-
-{-| Use this in your main function to start the game.
--}
-program : Config -> Program () Model Msg
-program config =
-    Browser.element
-        { init =
-            always <|
-                init
-                    { maps = config.maps
-                    , players = [ ( "Player", config.player ) ]
-                    , msPerTurn = config.msPerTurn
-                    , progressionFunction = Progression.reachExitPoint
-                    }
-        , update = update
-        , view = view
-        , subscriptions = always Sub.none
-        }
+type alias TurnFunction =
+    Warrior -> Map -> History -> Warrior.Action
 
 
 {-| Use this config to play with multiple warriors, and with a custom win condition.
 -}
-type alias MultiplayerConfig =
+type alias Config =
     { maps : List MapTemplate.Builder
     , players : List ( String, TurnFunction )
     , msPerTurn : Float
@@ -78,14 +54,32 @@ type alias MultiplayerConfig =
 
 {-| Start a program based of the multiplayer config
 -}
-multiplayerProgram : MultiplayerConfig -> Program () Model Msg
-multiplayerProgram config =
+program : Config -> Program () Model Msg
+program config =
     Browser.element
         { init = always <| init config
         , update = update
         , view = view
         , subscriptions = always Sub.none
         }
+
+
+init : Config -> ( Model, Cmd Msg )
+init config =
+    case config.maps of
+        [] ->
+            ( Done Nothing
+            , Cmd.none
+            )
+
+        first :: rest ->
+            ( modelWithMap first rest config.players config.progressionFunction config.msPerTurn
+            , msgAfter 0 BeginRound
+            )
+
+
+
+-- UPDATE
 
 
 {-| The game model.
@@ -106,106 +100,11 @@ type alias OngoingModel =
     }
 
 
-{-| The type signature of an AI turn function
--}
-type alias TurnFunction =
-    Warrior -> Map -> History -> Warrior.Action
-
-
 type alias PlayerDescription =
     { state : Warrior
     , turnFunction : TurnFunction
     , color : Color
     }
-
-
-init : MultiplayerConfig -> ( Model, Cmd Msg )
-init config =
-    case config.maps of
-        [] ->
-            ( Done Nothing
-            , Cmd.none
-            )
-
-        first :: rest ->
-            ( modelWithMap first rest config.players config.progressionFunction config.msPerTurn
-            , msgAfter 0 BeginRound
-            )
-
-
-modelWithMap :
-    MapTemplate.Builder
-    -> List MapTemplate.Builder
-    -> List ( String, TurnFunction )
-    -> ProgressionFunction
-    -> Float
-    -> Model
-modelWithMap currentMap remainingMaps players progressionFunction updateInterval =
-    let
-        pcs =
-            MapTemplate.spawnPoints currentMap
-                |> List.map2 toPlayerDescription players
-
-        toPlayerDescription ( id, turnFunc ) cord =
-            { state = Player.spawnHero id cord
-            , turnFunction = turnFunc
-            , color = Color.fromRGB ( 0, 0, 0 )
-            }
-
-        npcs =
-            MapTemplate.npcs currentMap
-                |> List.map
-                    (\( state, turnFunc ) ->
-                        { state = state
-                        , turnFunction = turnFunc
-                        , color = Color.fromRGB ( 0, 0, 0 )
-                        }
-                    )
-
-        playerDescriptions =
-            List.append pcs npcs
-                |> List.map2 (\clr pd -> { pd | color = clr }) playerColors
-
-        playerColors =
-            Palette.generate (List.length pcs + List.length npcs + 2)
-                |> List.filter notBlackOrWhite
-
-        notBlackOrWhite clr =
-            let
-                black =
-                    ( 0, 0, 0 )
-
-                white =
-                    ( 255, 255, 255 )
-
-                colorValues =
-                    Color.toRGB clr
-            in
-            not (colorValues == black || colorValues == white)
-
-        playerIdDict =
-            Dict.fromListBy (.state >> Player.id) playerDescriptions
-
-        playersWithUniqueIds =
-            List.filter uniquePlayer playerDescriptions
-
-        uniquePlayer pc =
-            case Dict.get (Player.id pc.state) playerIdDict of
-                Nothing ->
-                    False
-
-                Just pcInDict ->
-                    pcInDict == pc
-    in
-    Ongoing
-        { pcs = playerDescriptions
-        , currentMap = MapTemplate.build currentMap
-        , remainingMaps = remainingMaps
-        , mapHistory = History.init
-        , actionLog = []
-        , progressionFunction = progressionFunction
-        , updateInterval = updateInterval
-        }
 
 
 {-| The game message type.
@@ -304,6 +203,81 @@ ongoingUpdate msg model =
                         other ->
                             msgAfter model.updateInterval (InitializeMap other)
                     )
+
+
+modelWithMap :
+    MapTemplate.Builder
+    -> List MapTemplate.Builder
+    -> List ( String, TurnFunction )
+    -> ProgressionFunction
+    -> Float
+    -> Model
+modelWithMap currentMap remainingMaps players progressionFunction updateInterval =
+    let
+        pcs =
+            MapTemplate.spawnPoints currentMap
+                |> List.map2 toPlayerDescription players
+
+        toPlayerDescription ( id, turnFunc ) cord =
+            { state = Player.spawnHero id cord
+            , turnFunction = turnFunc
+            , color = Color.fromRGB ( 0, 0, 0 )
+            }
+
+        npcs =
+            MapTemplate.npcs currentMap
+                |> List.map
+                    (\( state, turnFunc ) ->
+                        { state = state
+                        , turnFunction = turnFunc
+                        , color = Color.fromRGB ( 0, 0, 0 )
+                        }
+                    )
+
+        playerDescriptions =
+            List.append pcs npcs
+                |> List.map2 (\clr pd -> { pd | color = clr }) playerColors
+
+        playerColors =
+            Palette.generate (List.length pcs + List.length npcs + 2)
+                |> List.filter notBlackOrWhite
+
+        notBlackOrWhite clr =
+            let
+                black =
+                    ( 0, 0, 0 )
+
+                white =
+                    ( 255, 255, 255 )
+
+                colorValues =
+                    Color.toRGB clr
+            in
+            not (colorValues == black || colorValues == white)
+
+        playerIdDict =
+            Dict.fromListBy (.state >> Player.id) playerDescriptions
+
+        playersWithUniqueIds =
+            List.filter uniquePlayer playerDescriptions
+
+        uniquePlayer pc =
+            case Dict.get (Player.id pc.state) playerIdDict of
+                Nothing ->
+                    False
+
+                Just pcInDict ->
+                    pcInDict == pc
+    in
+    Ongoing
+        { pcs = playersWithUniqueIds
+        , currentMap = MapTemplate.build currentMap
+        , remainingMaps = remainingMaps
+        , mapHistory = History.init
+        , actionLog = []
+        , progressionFunction = progressionFunction
+        , updateInterval = updateInterval
+        }
 
 
 msgAfter : Float -> Msg -> Cmd Msg
@@ -452,6 +426,10 @@ playerTurn playerDescription model =
                             )
                                 :: model.actionLog
                     }
+
+
+
+-- VIEW
 
 
 view : Model -> Html msg

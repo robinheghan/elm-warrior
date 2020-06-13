@@ -1,6 +1,6 @@
 module Warrior.Npc.Dummy exposing (takeTurn)
 
-{-| A dummy. A villain which just stands still no matter what happens.
+{-| A dummy. A villainous entity which can be counted on for exactly one thing: standing still.
 
 @docs takeTurn
 
@@ -11,7 +11,7 @@ import Warrior.History exposing (History)
 import Warrior.Map exposing (Map)
 
 
-{-| Use this function with the `withNPC` function of the `Map` module to add dangerous opponents to a map.
+{-| Use this function with the `withNpc` function of the `Warrior.Map.Builder` module to add opponents to a map.
 -}
 takeTurn : Warrior -> Map -> History -> Action
 takeTurn _ _ _ =

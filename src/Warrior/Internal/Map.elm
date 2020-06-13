@@ -21,7 +21,7 @@ import List.Extra as List
 import Warrior exposing (Warrior)
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Direction as Direction exposing (Direction)
-import Warrior.Internal.Player as Player
+import Warrior.Internal.Warrior as Player
 import Warrior.Item exposing (Item)
 import Warrior.Map.Tile exposing (Tile(..))
 

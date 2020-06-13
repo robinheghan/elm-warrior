@@ -3,7 +3,7 @@ module Warrior.Map exposing
     , look, lookDown
     )
 
-{-| The functions in this module allows you to create your own maps, or simply ask questions about the map currently being played.
+{-| This module contains functions which allow you look around a map, based on the location of a warrior.
 
 @docs Map
 
@@ -21,20 +21,20 @@ import Warrior.Internal.Map as Internal exposing (Map)
 import Warrior.Map.Tile exposing (Tile)
 
 
-{-| A map, or level.
+{-| A map, represented by a grid of tiles.
 -}
 type alias Map =
     Internal.Map
 
 
-{-| Provides a list of everything the player can see in a specific direction. The first item of the list will be the one tile away from the player. The second item will be two tiles away, etc.
+{-| Provides a list of everything the warrior can see in a specific direction. The first item of the list will be the one tile away. The second item will be two tiles away, etc.
 -}
 look : Direction -> Warrior -> Map -> List ( Coordinate, Tile )
 look =
     Internal.look
 
 
-{-| Describe what is at the players feet. Useful for deciding if there's an item worth picking up.
+{-| Describe what is at the warrior's feet. Usually this will just be empty space, but occasionally you might see an item worth picking up.
 -}
 lookDown : Warrior -> Map -> Tile
 lookDown =

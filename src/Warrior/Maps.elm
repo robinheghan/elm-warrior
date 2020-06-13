@@ -4,7 +4,7 @@ module Warrior.Maps exposing
     , straightGuard, straightPowerfulGuard, straightGuardPickupSword, straightGuardPickupPotion, dungeon
     )
 
-{-| A selection of pre-made maps to test your hero.
+{-| A selection of pre-made maps to test your warrior.
 
 @docs all, movement, fighting
 

@@ -1,5 +1,5 @@
-module Warrior.Internal.Player exposing
-    ( Player
+module Warrior.Internal.Warrior exposing
+    ( Warrior
     , addItem
     , alive
     , attack
@@ -23,8 +23,8 @@ import Warrior.Coordinate exposing (Coordinate)
 import Warrior.Item as Item exposing (Item)
 
 
-type Player
-    = Player Internals
+type Warrior
+    = Warrior Internals
 
 
 type Role
@@ -43,9 +43,9 @@ type alias Internals =
     }
 
 
-spawnHero : String -> Coordinate -> Player
+spawnHero : String -> Coordinate -> Warrior
 spawnHero id_ cord =
-    Player
+    Warrior
         { id = id_
         , role = Hero
         , spawnPosition = cord
@@ -56,9 +56,9 @@ spawnHero id_ cord =
         }
 
 
-spawnVillain : String -> Coordinate -> Player
+spawnVillain : String -> Coordinate -> Warrior
 spawnVillain id_ cord =
-    Player
+    Warrior
         { id = id_
         , role = Villain
         , spawnPosition = cord
@@ -69,57 +69,57 @@ spawnVillain id_ cord =
         }
 
 
-id : Player -> String
-id (Player fields) =
+id : Warrior -> String
+id (Warrior fields) =
     fields.id
 
 
-position : Player -> Coordinate
-position (Player fields) =
+position : Warrior -> Coordinate
+position (Warrior fields) =
     fields.currentPosition
 
 
-health : Player -> Int
-health (Player fields) =
+health : Warrior -> Int
+health (Warrior fields) =
     fields.health
 
 
-maxHealth : Player -> Int
-maxHealth (Player fields) =
+maxHealth : Warrior -> Int
+maxHealth (Warrior fields) =
     fields.maxHealth
 
 
-inventory : Player -> List Item
-inventory (Player fields) =
+inventory : Warrior -> List Item
+inventory (Warrior fields) =
     fields.inventory
 
 
-addItem : Item -> Player -> Player
-addItem item (Player fields) =
-    Player { fields | inventory = item :: fields.inventory }
+addItem : Item -> Warrior -> Warrior
+addItem item (Warrior fields) =
+    Warrior { fields | inventory = item :: fields.inventory }
 
 
-withPosition : Coordinate -> Player -> Player
-withPosition coordinate (Player fields) =
-    Player <| { fields | currentPosition = coordinate }
+withPosition : Coordinate -> Warrior -> Warrior
+withPosition coordinate (Warrior fields) =
+    Warrior <| { fields | currentPosition = coordinate }
 
 
-heal : Player -> Player
-heal ((Player fields) as player) =
-    Player
+heal : Warrior -> Warrior
+heal ((Warrior fields) as player) =
+    Warrior
         { fields
             | health = min fields.maxHealth (fields.health + healingPotential player)
             , inventory = List.remove Item.Potion fields.inventory
         }
 
 
-attack : Player -> Player -> Player
-attack attacker (Player defender) =
-    Player { defender | health = defender.health - attackDamage attacker }
+attack : Warrior -> Warrior -> Warrior
+attack attacker (Warrior defender) =
+    Warrior { defender | health = defender.health - attackDamage attacker }
 
 
-attackDamage : Player -> Int
-attackDamage (Player fields) =
+attackDamage : Warrior -> Int
+attackDamage (Warrior fields) =
     if List.member Item.Sword fields.inventory then
         3
 
@@ -127,8 +127,8 @@ attackDamage (Player fields) =
         1
 
 
-healingPotential : Player -> Int
-healingPotential (Player fields) =
+healingPotential : Warrior -> Int
+healingPotential (Warrior fields) =
     if List.member Item.Potion fields.inventory then
         6
 
@@ -136,16 +136,16 @@ healingPotential (Player fields) =
         1
 
 
-alive : Player -> Bool
-alive (Player fields) =
+alive : Warrior -> Bool
+alive (Warrior fields) =
     fields.health > 0
 
 
-isHero : Player -> Bool
-isHero (Player fields) =
+isHero : Warrior -> Bool
+isHero (Warrior fields) =
     fields.role == Hero
 
 
-isVillain : Player -> Bool
-isVillain (Player fields) =
+isVillain : Warrior -> Bool
+isVillain (Warrior fields) =
     fields.role == Villain

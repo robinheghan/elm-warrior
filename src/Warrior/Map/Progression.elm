@@ -15,15 +15,15 @@ module Warrior.Map.Progression exposing
 -}
 
 import Warrior.History as History exposing (History)
-import Warrior.Internal.Player as Player exposing (Player)
+import Warrior.Internal.Warrior as Player exposing (Warrior)
 import Warrior.Map as Map exposing (Map)
 import Warrior.Map.Tile as Tile
 
 
-{-| There are three ways the course of the game can progress. We can _advance_ certain players to the next map. If there are no maps left, the advanced players are deemed the winners. The game can be lost, also known as _game over_, and the map can still be _undecided_.
+{-| There are three ways the course of the game can progress. We can _advance_ certain players to the next map. If there are no maps left, the advanced players are deemed the winners. The game can be lost, also known as _game over_, or the map can be _undecided_.
 -}
 type Progression
-    = Advance (List Player)
+    = Advance (List Warrior)
     | GameOver
     | Undecided
 
@@ -31,7 +31,7 @@ type Progression
 {-| A function which receives information about the current map played, and decides what the game engine should do next. The function will be called at the end of every turn.
 -}
 type alias ProgressionFunction =
-    List Player -> Map -> History -> Progression
+    List Warrior -> Map -> History -> Progression
 
 
 {-| A progression function which advances all players when one has reached an exit point. The game is lost if all players are dead.

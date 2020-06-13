@@ -37,12 +37,12 @@ import Warrior exposing (Warrior)
 import Warrior.Coordinate exposing (Coordinate)
 import Warrior.History exposing (History)
 import Warrior.Internal.Map as Map exposing (Map)
-import Warrior.Internal.Player as Player
+import Warrior.Internal.Warrior as Player
 import Warrior.Item exposing (Item)
 import Warrior.Map.Tile as Tile exposing (Tile)
 
 
-{-| A map, or level.
+{-| A map in progress.
 -}
 type Builder
     = Builder Internals
@@ -57,7 +57,7 @@ type alias Internals =
     }
 
 
-{-| Describes how large a map should be in rows and columns. Use this when creating your own maps.
+{-| Describes how large a map should be in rows and columns.
 -}
 type alias Size =
     { rows : Int
@@ -78,14 +78,14 @@ init config =
         }
 
 
-{-| Sets a description for the map which, by default, will be displayed above the map when the game is played.
+{-| Sets a description for the map which will be displayed above the map when the game is played.
 -}
 withDescription : String -> Builder -> Builder
 withDescription description (Builder fields) =
     Builder { fields | description = description }
 
 
-{-| Marks a coordinate on the map where the player will spawn.
+{-| Marks a coordinate on the map where a playable warrior will spawn.
 -}
 withSpawnPoint : Coordinate -> Builder -> Builder
 withSpawnPoint cord map =
@@ -107,7 +107,7 @@ withExitPoint cord map =
         map
 
 
-{-| Turns every tile between two coordinates into walls.
+{-| Turns every tile between two coordinates into wall tiles.
 -}
 withWalledArea : Coordinate -> Coordinate -> Builder -> Builder
 withWalledArea cord1 cord2 ((Builder fields) as map) =
@@ -149,7 +149,7 @@ withNpc id cord turnFunc (Builder fields) =
     Builder { fields | npcs = ( Player.spawnVillain id cord, turnFunc ) :: fields.npcs }
 
 
-{-| Places an item into the inventory of the last villain added with the `withNPC` function.
+{-| Places an item into the inventory of the last villain added with the `withNpc` function.
 -}
 armLastNpc : Item -> Builder -> Builder
 armLastNpc item ((Builder fields) as builder) =
@@ -161,7 +161,7 @@ armLastNpc item ((Builder fields) as builder) =
             Builder { fields | npcs = ( Player.addItem item lastNpcState, lastNpcBrain ) :: rest }
 
 
-{-| Places an item on the map which can be picked up by players.
+{-| Places an item on the map which can be picked up by warriors.
 -}
 withItem : Coordinate -> Item -> Builder -> Builder
 withItem coordinate item (Builder fields) =
@@ -172,7 +172,7 @@ withItem coordinate item (Builder fields) =
     Builder { fields | items = ( coordinate, item ) :: cleansedItems }
 
 
-{-| A list of all points where players can spawn.
+{-| A list of points where warriors can spawn.
 -}
 spawnPoints : Builder -> List Coordinate
 spawnPoints (Builder fields) =
@@ -182,7 +182,7 @@ spawnPoints (Builder fields) =
         |> Array.toList
 
 
-{-| Return a list of all non-playable characters as well as those characters turn functions.
+{-| Return a list of all non-playable characters along with their turn functions.
 -}
 npcs : Builder -> List ( Warrior, Warrior -> Map -> History -> Warrior.Action )
 npcs (Builder fields) =

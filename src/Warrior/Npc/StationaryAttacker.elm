@@ -1,6 +1,6 @@
 module Warrior.Npc.StationaryAttacker exposing (takeTurn)
 
-{-| AI of a villain which attacks anything that gets close.
+{-| A villain which will attack anything that gets close.
 
 @docs takeTurn
 
@@ -13,7 +13,7 @@ import Warrior.Map as Map exposing (Map)
 import Warrior.Map.Tile as Tile
 
 
-{-| Use this function with the `withNPC` function of the `Map` module to add dangerous opponents to a map.
+{-| Use this function with the `withNpc` function of the `Warrior.Map.Builder` module to add dangerous opponents to a map.
 -}
 takeTurn : Warrior -> Map -> History -> Action
 takeTurn player map _ =
