@@ -69,7 +69,7 @@ type alias MultiplayerConfig =
     { maps : List MapTemplate.Builder
     , players : List ( String, PlayerTurnFunction )
     , msPerTurn : Float
-    , winCondition : List Player -> Map -> Bool
+    , winCondition : GameProgressionFunction
     }
 
 
@@ -99,7 +99,7 @@ type alias OngoingModel =
     , remainingMaps : List MapTemplate.Builder
     , mapHistory : History
     , actionLog : List ( PlayerDescription, String )
-    , winCondition : List Player -> Map -> Bool
+    , winCondition : GameProgressionFunction
     , updateInterval : Float
     }
 
@@ -108,6 +108,16 @@ type alias OngoingModel =
 -}
 type alias PlayerTurnFunction =
     Player -> Map -> History -> TopPlayer.Action
+
+
+type alias GameProgressionFunction =
+    List Player -> Map -> History -> GameProgression
+
+
+type GameProgression
+    = Advance (List Player)
+    | GameOver
+    | Undecided
 
 
 type alias PlayerDescription =
@@ -135,7 +145,7 @@ modelWithMap :
     MapTemplate.Builder
     -> List MapTemplate.Builder
     -> List ( String, PlayerTurnFunction )
-    -> (List Player -> Map -> Bool)
+    -> GameProgressionFunction
     -> Float
     -> Model
 modelWithMap currentMap remainingMaps players winCondition updateInterval =
@@ -256,27 +266,33 @@ ongoingUpdate msg model =
                     let
                         updatedModel =
                             playerTurn player model
+
+                        players =
+                            updatedModel.pcs
+                                |> List.map .state
                     in
                     ( Ongoing updatedModel
-                    , if updatedModel.winCondition (List.map .state updatedModel.pcs) updatedModel.currentMap then
-                        let
-                            possibleSurvivingPlayer =
-                                updatedModel.pcs
-                                    |> List.filter (.state >> Player.alive)
-                                    |> List.head
-                                    |> Maybe.map (.state >> Player.id)
-                        in
-                        msgAfter model.updateInterval (InitializeMap possibleSurvivingPlayer)
+                    , case updatedModel.winCondition players updatedModel.currentMap updatedModel.mapHistory of
+                        Advance playersToAdvance ->
+                            let
+                                possibleSurvivingPlayer =
+                                    playersToAdvance
+                                        |> List.find Player.alive
+                                        |> Maybe.map Player.id
+                            in
+                            msgAfter model.updateInterval (InitializeMap possibleSurvivingPlayer)
 
-                      else
-                        model.pcs
-                            |> List.dropWhile (\pc -> Player.id pc.state /= playerId)
-                            |> List.drop 1
-                            |> List.filter (.state >> Player.alive)
-                            |> List.head
-                            |> Maybe.map (.state >> Player.id >> TakeTurn)
-                            |> Maybe.withDefault BeginRound
-                            |> msgAfter model.updateInterval
+                        GameOver ->
+                            msgAfter model.updateInterval (InitializeMap Nothing)
+
+                        Undecided ->
+                            model.pcs
+                                |> List.dropWhile (\pc -> Player.id pc.state /= playerId)
+                                |> List.drop 1
+                                |> List.find (.state >> Player.alive)
+                                |> Maybe.map (.state >> Player.id >> TakeTurn)
+                                |> Maybe.withDefault BeginRound
+                                |> msgAfter model.updateInterval
                     )
 
 
@@ -428,11 +444,25 @@ playerTurn playerDescription model =
                     }
 
 
-doneWithCurrentMap : List Player -> Map -> Bool
-doneWithCurrentMap players currentMap =
-    List.any
-        (\p -> TopMap.isExit (Player.position p) currentMap)
-        players
+doneWithCurrentMap : List Player -> Map -> History -> GameProgression
+doneWithCurrentMap players currentMap history =
+    let
+        anyoneReachedExit =
+            List.any (\p -> TopMap.isExit (Player.position p) currentMap) players
+
+        allDead =
+            players
+                |> List.filter Player.alive
+                |> List.isEmpty
+    in
+    if anyoneReachedExit then
+        Advance players
+
+    else if allDead then
+        GameOver
+
+    else
+        Undecided
 
 
 view : Model -> Html msg
