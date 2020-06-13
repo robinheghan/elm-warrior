@@ -25,6 +25,7 @@ import Html exposing (Html)
 import List.Extra as List
 import Palette.Cubehelix as Palette
 import Process
+import Set
 import Task
 import Warrior.Direction as Direction
 import Warrior.Internal.History as History exposing (History)
@@ -32,7 +33,7 @@ import Warrior.Internal.Map as Map exposing (Map)
 import Warrior.Internal.Player as Player exposing (Player)
 import Warrior.Item as Item
 import Warrior.Map.Builder as MapTemplate
-import Warrior.Map.Progression as Progression exposing (ProgressionFunction)
+import Warrior.Map.Progression as Progression exposing (Progression, ProgressionFunction)
 import Warrior.Player as TopPlayer exposing (Player)
 import Warrior.Tile as Tile
 
@@ -91,12 +92,11 @@ multiplayerProgram config =
 -}
 type Model
     = Ongoing OngoingModel
-    | Done (Maybe String)
+    | Done (Maybe (List Player))
 
 
 type alias OngoingModel =
-    { initialPlayers : List ( String, PlayerTurnFunction )
-    , pcs : List PlayerDescription
+    { pcs : List PlayerDescription
     , currentMap : Map
     , remainingMaps : List MapTemplate.Builder
     , mapHistory : History
@@ -198,8 +198,7 @@ modelWithMap currentMap remainingMaps players progressionFunction updateInterval
                     pcInDict == pc
     in
     Ongoing
-        { initialPlayers = players
-        , pcs = playerDescriptions
+        { pcs = playerDescriptions
         , currentMap = MapTemplate.build currentMap
         , remainingMaps = remainingMaps
         , mapHistory = History.init
@@ -212,7 +211,7 @@ modelWithMap currentMap remainingMaps players progressionFunction updateInterval
 {-| The game message type.
 -}
 type Msg
-    = InitializeMap (Maybe String)
+    = InitializeMap Progression
     | BeginRound
     | TakeTurn String
 
@@ -230,24 +229,37 @@ update msg model =
 ongoingUpdate : Msg -> OngoingModel -> ( Model, Cmd Msg )
 ongoingUpdate msg model =
     case msg of
-        InitializeMap maybeLastWinner ->
-            case model.remainingMaps of
-                [] ->
-                    ( Done maybeLastWinner
+        InitializeMap progression ->
+            case ( progression, model.remainingMaps ) of
+                ( Progression.Advance players, [] ) ->
+                    ( Done (Just players)
                     , Cmd.none
                     )
 
-                next :: rest ->
-                    ( modelWithMap next rest model.initialPlayers model.progressionFunction model.updateInterval
+                ( Progression.Advance players, next :: rest ) ->
+                    let
+                        advancingPlayerIds =
+                            List.map Player.id players
+                                |> Set.fromList
+
+                        advancingPlayers =
+                            model.pcs
+                                |> List.filter (\pc -> Set.member (Player.id pc.state) advancingPlayerIds)
+                                |> List.map (\pc -> ( Player.id pc.state, pc.turnFunction ))
+                    in
+                    ( modelWithMap next rest advancingPlayers model.progressionFunction model.updateInterval
                     , msgAfter 0 BeginRound
+                    )
+
+                _ ->
+                    ( Done Nothing
+                    , Cmd.none
                     )
 
         BeginRound ->
             let
                 possibleFirstLivingPlayer =
-                    model.pcs
-                        |> List.filter (.state >> Player.alive)
-                        |> List.head
+                    List.find (\pc -> Player.isHero pc.state && Player.alive pc.state) model.pcs
             in
             case possibleFirstLivingPlayer of
                 Nothing ->
@@ -280,18 +292,6 @@ ongoingUpdate msg model =
                     in
                     ( Ongoing updatedModel
                     , case updatedModel.progressionFunction players updatedModel.currentMap updatedModel.mapHistory of
-                        Progression.Advance playersToAdvance ->
-                            let
-                                possibleSurvivingPlayer =
-                                    playersToAdvance
-                                        |> List.find Player.alive
-                                        |> Maybe.map Player.id
-                            in
-                            msgAfter model.updateInterval (InitializeMap possibleSurvivingPlayer)
-
-                        Progression.GameOver ->
-                            msgAfter model.updateInterval (InitializeMap Nothing)
-
                         Progression.Undecided ->
                             model.pcs
                                 |> List.dropWhile (\pc -> Player.id pc.state /= playerId)
@@ -300,6 +300,9 @@ ongoingUpdate msg model =
                                 |> Maybe.map (.state >> Player.id >> TakeTurn)
                                 |> Maybe.withDefault BeginRound
                                 |> msgAfter model.updateInterval
+
+                        other ->
+                            msgAfter model.updateInterval (InitializeMap other)
                     )
 
 
@@ -488,21 +491,25 @@ view model =
                         (List.map viewActionLog state.actionLog)
                     ]
 
-            Done winningPlayerId ->
+            Done possibleWinners ->
                 Element.el
                     [ Element.centerX
                     , Element.centerY
                     ]
                     (Element.text <|
-                        case winningPlayerId of
-                            Just id ->
-                                String.join " "
+                        case possibleWinners of
+                            Just [] ->
+                                "Congratulations!"
+
+                            Just winners ->
+                                String.join ""
                                     [ "Congratulations"
-                                    , id
+                                    , String.join ", " <|
+                                        List.map Player.id winners
                                     ]
 
                             Nothing ->
-                                "Congratulations!"
+                                "Game Over"
                     )
         )
 
