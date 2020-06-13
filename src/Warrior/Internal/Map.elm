@@ -223,19 +223,23 @@ tileColor tile =
             Element.rgba255 0 255 0 0.4
 
 
-look : Direction -> Coordinate -> Map -> List Tile
-look dir from map =
-    lookHelp dir from map []
+look : Direction -> Player -> Map -> List ( Coordinate, Tile )
+look dir player map =
+    let
+        coordinate =
+            currentPlayerPosition player map
+    in
+    lookHelp dir coordinate map []
 
 
-lookHelp : Direction -> Coordinate -> Map -> List Tile -> List Tile
+lookHelp : Direction -> Coordinate -> Map -> List ( Coordinate, Tile ) -> List ( Coordinate, Tile )
 lookHelp dir from ((Map fields) as map) result =
     let
         wantedCoordinate =
             coordinateFrom dir from
     in
     if not (coordinatesInBound wantedCoordinate map) then
-        Wall
+        ( wantedCoordinate, Wall )
             :: result
             |> List.reverse
 
@@ -249,14 +253,14 @@ lookHelp dir from ((Map fields) as map) result =
         in
         case tile of
             Wall ->
-                Wall
+                ( wantedCoordinate, Wall )
                     :: result
                     |> List.reverse
 
             Empty ->
                 let
                     updatedResult =
-                        tileAtPosition wantedCoordinate map
+                        ( wantedCoordinate, tileAtPosition wantedCoordinate map )
                             :: result
                 in
                 lookHelp dir wantedCoordinate map updatedResult
@@ -266,14 +270,14 @@ lookHelp dir from ((Map fields) as map) result =
                     dir
                     wantedCoordinate
                     map
-                    (tile :: result)
+                    (( wantedCoordinate, tile ) :: result)
 
 
 lookDown : Player -> Map -> Tile
 lookDown player ((Map fields) as map) =
     let
         playerPosition =
-            Player.position player
+            currentPlayerPosition player map
 
         tile =
             playerPosition
@@ -291,6 +295,13 @@ lookDown player ((Map fields) as map) =
 
         _ ->
             tile
+
+
+currentPlayerPosition : Player -> Map -> Coordinate
+currentPlayerPosition player (Map fields) =
+    List.find (Player.id >> (==) (Player.id player)) fields.npcs
+        |> Maybe.withDefault player
+        |> Player.position
 
 
 tileAtPosition : Coordinate -> Map -> Tile

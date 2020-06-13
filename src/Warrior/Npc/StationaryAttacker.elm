@@ -9,7 +9,7 @@ module Warrior.Npc.StationaryAttacker exposing (takeTurn)
 import Warrior.Direction as Direction
 import Warrior.History exposing (History)
 import Warrior.Map as Map exposing (Map)
-import Warrior.Player as Player exposing (Action(..), Player)
+import Warrior.Player exposing (Action(..), Player)
 import Warrior.Tile as Tile
 
 
@@ -18,12 +18,10 @@ import Warrior.Tile as Tile
 takeTurn : Player -> Map -> History -> Action
 takeTurn player map _ =
     let
-        currentPosition =
-            Player.position player
-
         canAttack direction =
-            Map.look direction currentPosition map
+            Map.look direction player map
                 |> List.head
+                |> Maybe.map Tuple.second
                 |> Maybe.map Tile.isPlayer
                 |> Maybe.withDefault False
     in

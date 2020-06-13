@@ -8,6 +8,7 @@ module Warrior.Map.Progression exposing
 import Warrior.History as History exposing (History)
 import Warrior.Internal.Player as Player exposing (Player)
 import Warrior.Map as Map exposing (Map)
+import Warrior.Tile as Tile
 
 
 type alias ProgressionFunction =
@@ -24,7 +25,11 @@ reachExitPoint : ProgressionFunction
 reachExitPoint players map _ =
     let
         anyoneReachedExit =
-            List.any (\p -> Map.isExit (Player.position p) map) players
+            List.any reachedExit players
+
+        reachedExit player =
+            Map.lookDown player map
+                |> Tile.isExit
 
         allDead =
             players
