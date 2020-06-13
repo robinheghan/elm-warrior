@@ -16,6 +16,8 @@ module Warrior exposing
 
 import Browser
 import Color exposing (Color)
+import Dict
+import Dict.Extra as Dict
 import Element exposing (Element)
 import Element.Background as Background
 import Element.Border as Border
@@ -29,7 +31,6 @@ import Warrior.Internal.History as History exposing (History)
 import Warrior.Internal.Map as Map exposing (Map)
 import Warrior.Internal.Player as Player exposing (Player)
 import Warrior.Item as Item
-import Warrior.Map as TopMap
 import Warrior.Map.Builder as MapTemplate
 import Warrior.Map.Progression as Progression exposing (ProgressionFunction)
 import Warrior.Player as TopPlayer exposing (Player)
@@ -181,6 +182,20 @@ modelWithMap currentMap remainingMaps players progressionFunction updateInterval
                     Color.toRGB clr
             in
             not (colorValues == black || colorValues == white)
+
+        playerIdDict =
+            Dict.fromListBy (.state >> Player.id) playerDescriptions
+
+        playersWithUniqueIds =
+            List.filter uniquePlayer playerDescriptions
+
+        uniquePlayer pc =
+            case Dict.get (Player.id pc.state) playerIdDict of
+                Nothing ->
+                    False
+
+                Just pcInDict ->
+                    pcInDict == pc
     in
     Ongoing
         { initialPlayers = players
