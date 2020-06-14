@@ -148,7 +148,7 @@ mapTile fields index originalTile =
             coordinate =
                 indexToCoordinate fields index
         in
-        tileAtPosition coordinate (Map fields)
+        warriorOrItemOnEmptyTile coordinate (Map fields)
 
 
 viewTile : Dict Int Color -> Int -> Tile -> Element a
@@ -233,44 +233,16 @@ look dir player map =
 
 
 lookHelp : Direction -> Coordinate -> Map -> List ( Coordinate, Tile ) -> List ( Coordinate, Tile )
-lookHelp dir from ((Map fields) as map) result =
+lookHelp dir from map result =
     let
         wantedCoordinate =
             coordinateFrom dir from
+
+        updatedResult =
+            ( wantedCoordinate, tileAtPosition wantedCoordinate map )
+                :: result
     in
-    if not (coordinatesInBound wantedCoordinate map) then
-        ( wantedCoordinate, Wall )
-            :: result
-            |> List.reverse
-
-    else
-        let
-            tile =
-                wantedCoordinate
-                    |> (\c -> translateCoordinates c map)
-                    |> (\idx -> Array.get idx fields.tiles)
-                    |> Maybe.withDefault Wall
-        in
-        case tile of
-            Wall ->
-                ( wantedCoordinate, Wall )
-                    :: result
-                    |> List.reverse
-
-            Empty ->
-                let
-                    updatedResult =
-                        ( wantedCoordinate, tileAtPosition wantedCoordinate map )
-                            :: result
-                in
-                lookHelp dir wantedCoordinate map updatedResult
-
-            _ ->
-                lookHelp
-                    dir
-                    wantedCoordinate
-                    map
-                    (( wantedCoordinate, tile ) :: result)
+    lookHelp dir wantedCoordinate map updatedResult
 
 
 lookDown : Warrior -> Map -> Tile
@@ -288,8 +260,7 @@ lookDown player ((Map fields) as map) =
     case tile of
         Empty ->
             fields.items
-                |> List.filter (\( itemCord, _ ) -> itemCord == playerPosition)
-                |> List.head
+                |> List.find (\( itemCord, _ ) -> itemCord == playerPosition)
                 |> Maybe.map (Item << Tuple.second)
                 |> Maybe.withDefault Empty
 
@@ -305,12 +276,30 @@ currentPlayerPosition player (Map fields) =
 
 
 tileAtPosition : Coordinate -> Map -> Tile
-tileAtPosition cord (Map fields) =
+tileAtPosition cord ((Map fields) as map) =
+    if not (coordinatesInBound cord map) then
+        Wall
+
+    else
+        let
+            tile =
+                translateCoordinates cord map
+                    |> (\idx -> Array.get idx fields.tiles)
+                    |> Maybe.withDefault Wall
+        in
+        case tile of
+            Empty ->
+                warriorOrItemOnEmptyTile cord map
+
+            other ->
+                other
+
+
+warriorOrItemOnEmptyTile : Coordinate -> Map -> Tile
+warriorOrItemOnEmptyTile cord (Map fields) =
     let
         possiblePlayer =
-            fields.npcs
-                |> List.filter Player.alive
-                |> List.find (\player -> Player.position player == cord)
+            List.find (\player -> Player.alive player && Player.position player == cord) fields.npcs
 
         possibleItem =
             fields.items
