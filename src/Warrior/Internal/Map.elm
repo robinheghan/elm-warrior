@@ -238,11 +238,19 @@ lookHelp dir from map result =
         wantedCoordinate =
             coordinateFrom dir from
 
+        tile =
+            tileAtPosition wantedCoordinate map
+
         updatedResult =
-            ( wantedCoordinate, tileAtPosition wantedCoordinate map )
+            ( wantedCoordinate, tile )
                 :: result
     in
-    lookHelp dir wantedCoordinate map updatedResult
+    case tile of
+        Wall ->
+            List.reverse updatedResult
+
+        _ ->
+            lookHelp dir wantedCoordinate map updatedResult
 
 
 lookDown : Warrior -> Map -> Tile
