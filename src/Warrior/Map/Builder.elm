@@ -89,8 +89,8 @@ withDescription description (Template fields) =
 -}
 withSpawnPoint : Coordinate -> Template -> Template
 withSpawnPoint cord map =
-    if coordinatesInBound cord map then
-        updateTiles (Array.set (translateCoordinates cord map) Tile.SpawnPoint) map
+    if coordinatesInBound map cord then
+        updateTiles (Array.set (translateCoordinates map cord) Tile.SpawnPoint) map
 
     else
         map
@@ -100,8 +100,8 @@ withSpawnPoint cord map =
 -}
 withExitPoint : Coordinate -> Template -> Template
 withExitPoint cord map =
-    if coordinatesInBound cord map then
-        updateTiles (Array.set (translateCoordinates cord map) Tile.Exit) map
+    if coordinatesInBound map cord then
+        updateTiles (Array.set (translateCoordinates map cord) Tile.Exit) map
 
     else
         map
@@ -132,7 +132,8 @@ withWalledArea cord1 cord2 ((Template fields) as map) =
             List.range 0 linesToAdjust
                 |> List.map (\offset -> { origin | y = origin.y + offset })
                 |> List.concatMap tileCoordinates
-                |> List.map (\cord -> translateCoordinates cord map)
+                |> List.filter (coordinatesInBound map)
+                |> List.map (translateCoordinates map)
                 |> List.foldl (\pos mapFields -> Array.set pos Tile.Wall mapFields) fields.tiles
 
         tileCoordinates cord =
@@ -206,8 +207,8 @@ build (Template fields) =
 -- HELPERS
 
 
-coordinatesInBound : Coordinate -> Template -> Bool
-coordinatesInBound cord (Template fields) =
+coordinatesInBound : Template -> Coordinate -> Bool
+coordinatesInBound (Template fields) cord =
     let
         totalRows =
             Array.length fields.tiles // fields.tilesPerRow
@@ -218,8 +219,8 @@ coordinatesInBound cord (Template fields) =
         && (cord.x < fields.tilesPerRow)
 
 
-translateCoordinates : Coordinate -> Template -> Int
-translateCoordinates cord (Template fields) =
+translateCoordinates : Template -> Coordinate -> Int
+translateCoordinates (Template fields) cord =
     let
         colBase =
             cord.y * fields.tilesPerRow
