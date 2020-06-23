@@ -146,8 +146,16 @@ withWalledArea cord1 cord2 ((Template fields) as map) =
 {-| Places a villain on the specific coordinate of the map, using the supplied function to know what to do each turn. You can find pre-made turn functions in the `Warrior.Npc` module.
 -}
 withNpc : String -> Coordinate -> (Warrior -> Map -> History -> Warrior.Action) -> Template -> Template
-withNpc id cord turnFunc (Template fields) =
-    Template { fields | npcs = ( Player.spawnVillain id cord, turnFunc ) :: fields.npcs }
+withNpc id cord turnFunc ((Template fields) as map) =
+    if coordinatesInBound map cord then
+        let
+            cleansedNpcs =
+                List.filter (\( npc, _ ) -> Warrior.position npc /= cord) fields.npcs
+        in
+        Template { fields | npcs = ( Player.spawnVillain id cord, turnFunc ) :: cleansedNpcs }
+
+    else
+        map
 
 
 {-| Places an item into the inventory of the last villain added with the `withNpc` function.
@@ -165,12 +173,16 @@ armLastNpc item ((Template fields) as builder) =
 {-| Places an item on the map which can be picked up by warriors.
 -}
 withItem : Coordinate -> Item -> Template -> Template
-withItem coordinate item (Template fields) =
-    let
-        cleansedItems =
-            List.filter (\( itemCord, _ ) -> itemCord /= coordinate) fields.items
-    in
-    Template { fields | items = ( coordinate, item ) :: cleansedItems }
+withItem cord item ((Template fields) as map) =
+    if coordinatesInBound map cord then
+        let
+            cleansedItems =
+                List.filter (\( itemCord, _ ) -> itemCord /= cord) fields.items
+        in
+        Template { fields | items = ( cord, item ) :: cleansedItems }
+
+    else
+        map
 
 
 {-| A list of points where warriors can spawn.
