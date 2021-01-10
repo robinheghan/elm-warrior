@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Add npm bin to path
-        run: echo ::add-path::$(npm bin)
+        run: npm bin >> $GITHUB_PATH
       - name: Build elm
         run: elm make --output /dev/null
       - name: Run elm-test
@@ -72,6 +72,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Add npm bin to path
-        run: echo ::add-path::$(npm bin)
+        run: npm bin >> $GITHUB_PATH
       - name: Build elm docs
         run: elm make --docs docs.json
